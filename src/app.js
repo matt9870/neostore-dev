@@ -3,18 +3,20 @@ require('./db/mongoose');
 const multer = require('multer');
 
 //Importing routers
-// const userRouter = require('./routers/user.router');
-// const orderRouter = require('./routers/orders.router');
+const userRouter = require('./routers/user.router');
+const orderRouter = require('./routers/orders.router');
 // const checkoutRouter = require('./routers/checkout.router');
 const productRouter = require('./routers/products.router');
-const serverDataRouter = require('./routers/serverData.router');
+const productDefaultDataRouter = require('./routers/productDefaultData.router');
 
 const app = express();
 
 app.use(express.json());
 
 //Using routers
-app.use(serverDataRouter);
+app.use(userRouter);
+// app.use(orderRouter);
+app.use(productDefaultDataRouter);
 app.use(productRouter);
 
 //Error Handler

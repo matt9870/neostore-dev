@@ -3,30 +3,28 @@ const path = require('path');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, './images/productImages/');
+        cb(null, './images/user/');
     },
     filename: (req, file, cb) => {
-        let productColor = `none`, productName = 'none';
-        if (!(req.body.color === undefined && req.body.productName === undefined)) {
-            productColor = req.body.color;
-            productName = req.body.productName;
+        let username = `none`;
+        if (!(req.body.firstName === undefined)){
+            username = req.body.firstName;
         }
         const lengthOfExtension = -path.extname(file.originalname).length;
-        const basename = productColor + '-' + productName;
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, basename + '-' + uniqueSuffix + path.extname(file.originalname))
+        cb(null, username + '-' + uniqueSuffix + path.extname(file.originalname))
     }
 });
 
-const uploadFiles = multer({
+const uploadPic = multer({
     fileFilter: (req, file, cb) => {
-        checkFileType(file, cb);
+        checkFileType(file, cb)
     },
     limits: {
         fileSize: 2000000
     },
-    storage: storage
-})
+    storage: storage,
+});
 
 function checkFileType(file, cb) {
     const filetypes = /jpeg|jpg|png/;
@@ -42,4 +40,4 @@ function checkFileType(file, cb) {
     }
 }
 
-module.exports = uploadFiles;
+module.exports = uploadPic;
