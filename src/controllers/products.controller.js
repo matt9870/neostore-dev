@@ -7,9 +7,10 @@ const cartModel = require('../models/cart.model');
 const app = require('../config/default.json')
 
 //main apis
+
+//admin
 exports.addProduct = async (req, res) => {
     try {
-
         if (!req.files.images) {
             // await productsHelper.deleteFiles(req.files.images);
             return res.status(402).send({
@@ -37,13 +38,13 @@ exports.addProduct = async (req, res) => {
         })
 
         product.save(product).then(async productData => {
+            let productCount = await productsHelper.addProductCount();
             res.status(200).send({
-                message: `Product saved to DB`,
+                message: `Product saved to DB and ${productCount}`,
                 productData
             })
         }).catch(async err => {
             await productsHelper.deleteFiles(req.files.images);
-
             res.status(402).send({
                 message: 'Product not saved to DB',
                 err,
@@ -66,7 +67,7 @@ exports.addProductImages = async (req, res) => {
         productImagesArray.forEach(imageData => {
             product.productImages.push(imageData);
         })
-
+        product.productStockCount += parseInt(req.body.stock) || 0;
         product.productColors.push(req.body.color);
 
         product.save(product).then(data => {
@@ -84,25 +85,29 @@ exports.addProductImages = async (req, res) => {
             return;
         })
     } catch (error) {
-        res.status(500).send({ message: `Server error, Something broke` })
+        console.log(error);
+        res.status(500).send({ message: `Server error, Something broke`,error })
     }
 
 }
 
+
+//user
 exports.getDashboard = async (req, res) => {
     try {
         const productCategoriesObject = await productCategoryModel.find({});
         const productCategories = productCategoriesObject[0].productCategories;
-        // var topRatedProducts = await productsHelper.gettopRatedProducts(productCategories);
+        let topRatedProducts = await productsHelper.gettopRatedProducts();
         var productOfEachCategory = await productsHelper.getProductOfEachCategory(productCategories);
 
         res.status(200).send({
             msg: `Got the data`,
-            topRatedProducts: `getting top rated products`,
+            topRatedProducts,
             productsOfAllCategories: productOfEachCategory
         });
 
     } catch (error) {
+        console.log(error);
         res.status(500).send({
             message: `Server error, Something broke`,
             error
@@ -134,74 +139,77 @@ exports.getProductDetails = async (req, res) => {
 
 exports.addProductToCart = async (req, res) => {
     try {
+        const param = req.params.id;
+        const params = param.split('&');
         const user = await userModel.findById(res.locals.userId);
-        const product = await productModel.findById(req.params.id);
-        if (!product) {
-            throw new Error
-        }
-        const cart = await cartModel.findById(user.cartId);
+        const product = await productModel.findById(params[0]);
+        const productColorSelected = params[1];
+        let cart = await cartModel.findById(user.cartId);
+        if (!product)
+            throw `Product doesn't exist`
+        if (!(product.productColors.includes(productColorSelected)))
+            throw `Product Color doesn't exist`
+
         if (cart.productIds.includes(product._id)) {
-            // add the quantity by 1 and change price accordingly
-            let j = 0, noOfProducts = cart.productIds.length;
-            while (j < noOfProducts) {
-                console.log(`checking ${cart.productDetails[j].productId}`);
-                console.log(cart.productDetails[j].productId, product._id);
-                if (cart.productDetails[j].productId === product._id) {
-                    console.log(`found the match`);
-                    cart.productDetails[j].orderQuantity++;
-                    cart.productDetails[j].total += cart.total;
-                    if (cart.subTotalPrice === undefined)
-                        cart.subTotalPrice = product.productPrice;
-                    else
-                        cart.subTotalPrice = cart.subTotalPrice + product.productPrice;
-                    cart.totalPrice = 1.05 * cart.subTotalPrice;
-                    console.log(j, cart);
-                    j = cart.productIds.length;
-                }
-                j++;
-            }
-            // for (j = 0; j++; j < 2) {
-            //     let productInCart = cart.productDetails[j];
-            //     console.log(`checking ${productInCart.productId}`);
-            //     if (productInCart.productId === product._id) {
-            //         productInCart.orderQuantity++;
-            //         productInCart.total += cart.total;
-            //         if (cart.subTotalPrice === undefined)
-            //             cart.subTotalPrice = product.productPrice;
-            //         else
-            //             cart.subTotalPrice = cart.subTotalPrice + product.productPrice;
-            //         cart.totalPrice = 1.05 * cart.subTotalPrice;
-            //         j = cart.productIds.length;
-            //     }
-            // }
-        } else {
-            cart.productIds.push(product._id);
-            cart.productDetails = {
-                productId: product._id,
-                productName: product.productName,
-                productSeller: product.productSeller,
-                productStock: product.productStockCount,
-                orderQuantity: 1,
-                productPrice: product.productPrice,
-                total: product.productPrice,
-            }
-            if (cart.subTotalPrice === undefined)
-                cart.subTotalPrice = product.productPrice;
-            else
-                cart.subTotalPrice = cart.subTotalPrice + product.productPrice;
-            cart.totalPrice = 1.05 * cart.subTotalPrice;
+            cart = await productsHelper.addQuantity(cart, product, productColorSelected);
         }
-        res.status(200).send({ cart });
-        // cart.save(cart).then(cartData => {
-        //     res.status(200).send({
-        //         message: `success`,
-        //         cart
-        //     })
-        // }).catch(err => {
-        //     return res.status(400).send({
-        //         message: `Error occurred while saving Cart data`,
-        //         err
-        //     })
+        else {
+            cart = await productsHelper.addNewProduct(cart, product, productColorSelected);
+        }
+        cart.save(cart).then(cartData => {
+            res.status(200).send({
+                message: `success`,
+                cartData
+            })
+        }).catch(err => {
+            return res.status(400).send({
+                message: `Error occurred while saving Cart data`,
+                err
+            })
+        })
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send({
+            message: `${app.APP.SERVER.ERROR}`,
+            error
+        })
+    }
+}
+
+exports.addProductRating = async (req, res) => {
+    try {
+        const param = req.params.id;
+        const params = param.split('&');
+        let product = await productModel.findById(params[0]);
+
+        if (!(params[1] < 5 && params[1] > 0))
+            throw `Rating has to be between 0 and 5`
+        if (!product)
+            throw `Product doesn't exist`
+        product.rating.count += 1;
+        product.rating.users.push(res.locals.userId);
+
+        let avgRating = product.rating.average;
+        let ratingCount = product.rating.count;
+
+        if (avgRating === 0) {
+            product.rating.average += params[1];
+        }
+        else {
+            let receivedRating = parseInt(params[1])
+            product.rating.average = (((avgRating * (ratingCount - 1)) + receivedRating) / (ratingCount)).toFixed(2);
+            console.log(`after math`, product.rating.average);
+        }
+
+        await productsHelper.addRatingToServerData(params[0], product.rating);
+
+        product.save(product).then(data => {
+            return res.status(200).send({
+                'Product Rating': data.rating
+            })
+        })
+        // res.status(400).send({
+        //     'Product Rating': product.rating
         // })
     } catch (error) {
         console.log(error);
@@ -210,6 +218,7 @@ exports.addProductToCart = async (req, res) => {
             error
         })
     }
+
 }
 
 //test apis

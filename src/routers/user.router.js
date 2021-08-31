@@ -12,5 +12,52 @@ userRouter.post(`/login`, auth.generateToken, userController.login, (req, res) =
     res.json({ res });
 })
 
+userRouter.post(`/forgotPassword`, userController.sendVerificationCode, (req, res) => {
+    res.json({ res });
+})
+
+userRouter.post(`/recoverPassword`, userController.resetPassword, (req, res) => {
+    res.json({ res });
+})
+
+userRouter.get('/getCart', auth.verifyToken, userController.getCartDetails, (req, res) => {
+    res.json({ res });
+})
+
+userRouter.post('/updateCart', auth.verifyToken, userController.updateCartDetails, (req, res) => {
+    res.json({ res });
+})
+
+userRouter.get('/profile', auth.verifyToken, userController.getProfileDetails, (req, res) => {
+    res.json({ res });
+})
+
+userRouter.post('/updateprofile', auth.verifyToken, userController.updateProfileDetails, (req, res) => {
+    res.json({ res });
+})
+
+userRouter.get('/getCustAddress', auth.verifyToken, userController.getCustomerAddress, (req, res) => {
+    res.json({ res });
+})
+
+userRouter.post('/addCustAddress', auth.verifyToken, userController.addCustomerAddress, (req, res) => {
+    res.json({ res });
+})
+
+userRouter.get(`/proceedToBuy`, auth.verifyToken, userController.getCustomerAddress, (req,res) => {
+    res.json({res});
+})
+
+userRouter.post(`/proceedToCheckout/:id`, auth.verifyToken, userController.proceedToCheckout, (req,res) => {
+    res.json({res});
+})//id is the cart id
+
+userRouter.get(`/reviewOrderDetails/:id`, auth.verifyToken, userController.reviewOrderDetails, (req,res) => {
+    res.json({res});
+})//id is the order id
+
+userRouter.post(`/placeOrder/:id`, auth.verifyToken, userController.placeOrder, (req,res) => {
+    res.json({res});
+})//id is the order id
 
 module.exports = userRouter;

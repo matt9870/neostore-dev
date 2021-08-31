@@ -38,11 +38,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    profile_pic: [{
+    profile_pic: {
         filename: { type: String, required: true },
-        filepath: String,
-        filetype: String
-    }],
+        destination: String,
+        fileType: String
+    },
     gender: {
         type: String,
         enum: [`male`, `female`],
@@ -56,10 +56,30 @@ const userSchema = new mongoose.Schema({
     orders: {
         type: Array
     },
-    addresses: {
-        type: Array,
-        validate: [arrayLimit, `{PATH} exceeds the limit of 10`]
-    },
+    addresses: [{
+        address: {
+            type: String,
+            required: true
+        },
+        pincode: {
+            type: Number,
+            required: true
+        },
+        city: {
+            type: String,
+            required: true
+        },
+        state: {
+            type: String,
+            required: true
+        },
+        country: {
+            type: String,
+            required: true
+        }
+    }],
+    defaultAddress : ObjectId,
+    resetCode: Number,
     cartId: {
         type: ObjectId
     },

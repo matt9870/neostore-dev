@@ -7,19 +7,55 @@ const orderSchema = new mongoose.Schema({
         type: ObjectId,
         required:true
     },
+    userName : {
+        type: String,
+        required: true
+    },
     userEmail: {
         type: String,
         required:true
     },
-    productDetails: {
-        productName: String,
-        productSeller: String,
-        productStock: Number,
-        orderQuantity: Number,
-        productPrice: Number
+    productDetails: [{
+        productId:ObjectId,
+        productName:String,
+        productSeller:String,
+        productColor: String,
+        productStock:Number,
+        orderQuantity:Number,
+        productImage: String,
+        productPrice:Number,
+        total:Number
+    }],
+    address:{
+        address: {
+            type: String
+        },
+        pincode: {
+            type: Number
+        },
+        city: {
+            type: String,
+        },
+        state: {
+            type: String,
+        },
+        country: {
+            type: String,
+        }
     },
-    subTotalPrice: Number,
-    totalPrice: Number
+    subTotalPrice: {
+        type: Number,
+        required: true
+    },
+    totalPrice: {
+        type: Number,
+        required: true
+    },
+    status:{
+        type: String,
+        required: true,
+        default: 'false'
+    }
 },
     {timestamps: true}
 );

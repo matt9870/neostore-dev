@@ -26,10 +26,11 @@ const productSchema = new mongoose.Schema({
         type: Array,
         required: true
     },
-    productImages:{
-        type: Array,
-        required: true
-    },
+    productImages:[{
+        filename: String,
+        destination: String,
+        fileType: String
+    }],
     defaultColor: {
         type: String
     },
