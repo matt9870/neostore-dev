@@ -211,4 +211,71 @@ async function gettopRatedProducts() {
     return topRatedProducts;
 }
 
-module.exports = { getFileDetails, deleteFiles, getProductOfEachCategory, getProductImagesDefaultColor, addQuantity, addNewProduct, addRatingToServerData, addProductCount, gettopRatedProducts }
+async function filterProductData(product) {
+    try {
+        let filteredData = {
+            name: product.productName,
+            image: product.productImages[0].filename,
+            rating: product.rating.average,
+            price: product.productPrice
+        }
+        return filteredData;
+    } catch (error) {
+        return error;
+    }
+}
+
+async function filterForCategories(categories, product) {
+    if (categories.includes(product.productCategory)) {
+        filteredData = await filterProductData(product);
+        return filteredData;
+    }
+}
+
+async function filterForColors(colors, product) {
+    let noOfProductColors = product.productColors.length, productColors = product.productColors;
+    for (let k = 0; k < noOfProductColors; k++) {
+        if (colors.includes(productColors[k])) {
+            filteredData = await filterProductData(product);
+            return filteredData;
+        }
+    }
+
+}
+
+async function sortProducts(products, basedOn, order) {
+
+    let sortedProducts;
+
+    if (basedOn === 'rating') {
+        if (order === 'asc') {
+            sortedProducts = await products.sort(function (a, b) {
+                return a.rating.average - b.rating.average
+            })
+        }
+        else if (order === 'desc') {
+            sortedProducts = await products.sort(function (a, b) {
+                return b.rating.average - a.rating.average
+            })
+        }
+    } else {
+        if (order === 'asc') {
+            sortedProducts = await products.sort(function (a, b) {
+                return a.productPrice - b.productPrice
+            })
+        }
+        else if (order === 'desc') {
+            sortedProducts = await products.sort(function (a, b) {
+                return b.productPrice - a.productPrice
+            })
+        }
+    }
+    return sortedProducts;
+    let sortedProductsToReturn=[];
+    for(let j=0; j<sortedProducts.length; j++){
+        sortedProductsToReturn.push(sortedProducts[j].productName);
+    }
+    return sortedProductsToReturn;
+}
+
+module.exports = { getFileDetails, deleteFiles, getProductOfEachCategory, getProductImagesDefaultColor, addQuantity, addNewProduct, addRatingToServerData, addProductCount, gettopRatedProducts, filterProductData, sortProducts, filterForCategories, filterForColors }

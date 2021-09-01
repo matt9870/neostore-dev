@@ -19,10 +19,24 @@ productRouter.post('/addProductImages/:id', upload.fields([{
     res.json({ res })
 })
 
+/*********************************************************************************** */
 //user
 productRouter.get('/getDashboard', productController.getDashboard, (req, res) => {
     res.json({ res });
 })
+
+productRouter.post('/find/:keyword', productController.searchForProduct, (req,res) => {
+    res.json({res});
+})
+
+productRouter.get('/commonProducts', productController.getCommonProducts, (req,res) => {
+    res.json({res});
+})
+
+productRouter.post('/commonProducts', productController.filterCommonProducts, (req,res) => {
+    res.json({res});
+})
+
 
 productRouter.get('/getProductDetails/:id&:color', productController.getProductDetails, (req, res) => {
     res.json({ res })

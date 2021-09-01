@@ -86,7 +86,7 @@ exports.addProductImages = async (req, res) => {
         })
     } catch (error) {
         console.log(error);
-        res.status(500).send({ message: `Server error, Something broke`,error })
+        res.status(500).send({ message: `Server error, Something broke`, error })
     }
 
 }
@@ -103,9 +103,125 @@ exports.getDashboard = async (req, res) => {
         res.status(200).send({
             msg: `Got the data`,
             topRatedProducts,
-            productsOfAllCategories: productOfEachCategory
+            productOfEachCategory
         });
 
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({
+            message: `Server error, Something broke`,
+            error
+        })
+    }
+}
+
+exports.searchForProduct = async (req, res) => {
+    try {
+        let searchKeyword = new RegExp(req.params.keyword);
+        const products = await productModel.find({ productName: { $regex: searchKeyword, $options: 'i' } });
+        let noOfProducts = products.length;
+        let searchResult = [];
+        for (let j = 0; j < noOfProducts; j++) {
+            let filteredProductData = await productsHelper.filterProductData(products[j]);
+            searchResult.push(filteredProductData);
+        }
+        return res.status(200).send({
+            searchResult
+        })
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({
+            message: `Server error, Something broke`,
+            error
+        })
+    }
+}
+
+exports.getCommonProducts = async (req, res) => {
+    try {
+        const products = await productModel.find({});
+        let noOfProducts = products.length;
+        let commonProducts = [];
+        let filteredData;
+        let serverCategoryData = await productCategoryModel.find({});
+        let allCategories = serverCategoryData[0].productCategories;
+
+        let serverColorData = await productColorModel.find({});
+        let allColors = serverColorData[0].productColors;
+
+        for (let j = 0; j < noOfProducts; j++) {
+            filteredData = await productsHelper.filterProductData(products[j]);
+            commonProducts.push(filteredData);
+        }
+        return res.status(200).send({
+            commonProducts,
+            allCategories,
+            allColors
+        })
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({
+            message: `Server error, Something broke`,
+            error
+        })
+    }
+}
+
+exports.filterCommonProducts = async (req, res) => {
+    try {
+        if ((!req.body.categories && !req.body.colors) || (!(req.body.categories.length || req.body.colors.length)))
+            throw `filters need to be provided for this api`
+
+        let products = await productModel.find({});
+        let noOfProducts = products.length;
+        if (req.body.sort) {
+            products = await productsHelper.sortProducts(products, req.body.sort.basedOn, req.body.sort.order)
+        }
+        else
+            products = await productsHelper.sortProducts(products, 'rating', 'desc');
+
+        let serverCategoryData = await productCategoryModel.find({});
+        let allCategories = serverCategoryData[0].productCategories;
+
+        let serverColorData = await productColorModel.find({});
+        let allColors = serverColorData[0].productColors;
+
+        let filteredData, categories, colors, filteredcommonProducts = [];
+
+        if (req.body.categories && req.body.categories.length > 0) {
+            categories = req.body.categories;
+        }
+        if (req.body.colors && req.body.colors.length > 0) {
+            colors = req.body.colors;
+        }
+
+        for (let j = 0; j < noOfProducts; j++) {
+            //need to send filterdata and eachproduct            
+            if (categories && colors) {
+                if (categories.includes(products[j].productCategory)) {
+                    filteredData = await productsHelper.filterForColors(colors, products[j]);
+                    if (filteredData)
+                        filteredcommonProducts.push(filteredData);
+                }
+            }
+            else if (categories) {
+                filteredData = await productsHelper.filterForCategories(categories, products[j]);
+                if (filteredData)
+                    filteredcommonProducts.push(filteredData);
+            }
+            else if (colors) {
+                filteredData = await productsHelper.filterForColors(colors, products[j]);
+                if (filteredData)
+                    filteredcommonProducts.push(filteredData);
+            }
+        }
+        let msg = `success`
+        if (filteredcommonProducts.length === 0)
+            msg = `No products under the given filter`
+        return res.status(200).send({
+            msg,
+            filteredcommonProducts
+        })
     } catch (error) {
         console.log(error);
         res.status(500).send({

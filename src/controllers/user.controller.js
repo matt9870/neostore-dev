@@ -1,12 +1,17 @@
 const userModel = require('../models/user.model');
 const cartModel = require(`../models/cart.model`);
-const app = require('../config/default.json');
-const deleteFile = require('../helpers/deleteFile.helper');
-const bcrypt = require('bcrypt');
-const saltRounds = 10;
-var sendEmailHelper = require('../helpers/sendResetEmail.helper');
 const orderModel = require('../models/orders.model');
 
+const moment = require('moment');
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
+
+const app = require('../config/default.json');
+const deleteFile = require('../helpers/deleteFile.helper');
+var sendEmailHelper = require('../helpers/sendResetEmail.helper');
+const userHelper = require('../helpers/user.helper');
+
+//User Authentication, recover password
 exports.registerUser = async (req, res, next) => {
     try {
         const userProfilePic = req.file;
@@ -72,7 +77,7 @@ exports.registerUser = async (req, res, next) => {
 exports.login = async (req, res) => {
     try {
         const userId = res.locals.currentUser.id;
-        const user= await userModel.findById(userId);
+        const user = await userModel.findById(userId);
         if (userId) {
             return res.status(200).send({ msg: 'user found', user: res.locals.currentUser, "cart Id": user.cartId });
         }
@@ -142,6 +147,9 @@ exports.resetPassword = async (req, res) => {
     }
 }
 
+
+/******************************************************************************** */
+//Product management
 exports.getCartDetails = async (req, res) => {
     try {
         const user = await userModel.findById(res.locals.userId);
@@ -204,6 +212,123 @@ exports.updateCartDetails = async (req, res) => {
     }
 }
 
+exports.proceedToCheckout = async (req, res) => {
+    try {
+        const cart = await cartModel.findById(req.params.id);
+        const user = await userModel.findById(res.locals.userId);
+        if (!cart || cart.productDetails.length === 0)
+            throw `Cart not found or doesnt have any products added`
+        if (!req.body.address && !req.body.newAddress)
+            throw `Address should be sent in req.body to place order`
+
+        let order = new orderModel({
+            userId: cart.userId,
+            userName: user.firstName + ' ' + user.secondName,
+            userEmail: cart.userEmail,
+            productDetails: cart.productDetails,
+            subTotalPrice: cart.subTotalPrice,
+            totalPrice: cart.totalPrice
+        })
+        if (req.body.newAddress) {
+            let duplicateAddressStatus = true;
+            duplicateAddressStatus = await userHelper.checkForDuplicateAddress(user.addresses, req.body.newAddress);
+            if (duplicateAddressStatus)
+                throw `Address already exists and or limit for adding address has reached`
+            else {
+                console.log(`adding the new address to order object`);
+                order.address = req.body.newAddress;
+                user.addresses.push(req.body.newAddress);
+                user.save(user).then(() => {
+                    order.save(order).then(data => {
+                        return res.status(200).send({
+                            message: `success`,
+                            data
+                        })
+                    }).catch(err => { throw `Error while saving order data` })
+                }).catch(err => { throw `Error while saving address to user` })
+            }
+        }
+        else {
+            console.log(`adding existing address to order`);
+            order.address = req.body.address;
+
+            order.save(order).then(data => {
+                res.status(200).send({
+                    message: `success`,
+                    data
+                })
+            }).catch(err => { throw `Error while saving order data - ${err}` })
+        }
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send({
+            message: `${app.APP.SERVER.ERROR}`,
+            error
+        })
+    }
+}
+
+exports.reviewOrderDetails = async (req, res) => {
+    try {
+        const order = await orderModel.findById(req.params.id);
+        if (!order)
+            throw `Order not found`
+        const formatted = moment(order.createdAt).format('DD MM YYYY, h:mm:ss a');
+        // console.log(moment(order.createdAt, 'MMMM Do YYYY, h:mm:ss a').fromNow());
+        let orderCreationTime = moment(order.createdAt, 'MMMM Do YYYY, h:mm:ss a').fromNow();
+        res.status(200).send({
+            message: `Order was created on ${formatted}`,
+            additionalMessage: `Order was created ago ${orderCreationTime}`,
+            order
+        })
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send({
+            message: `${app.APP.SERVER.ERROR}`,
+            error
+        })
+    }
+}
+
+exports.placeOrder = async (req, res) => {
+    try {
+        const order = await orderModel.findById(req.params.id);
+        if (!order)
+            throw `Order not found`
+        const user = await userModel.findById(res.locals.userId);
+        if (!user)
+            throw `User was not found`
+        if (order.status)
+            throw `Attempting to place an order that has already been placed`
+        order.status = true;
+        user.orders.push(order._id);
+
+        let products = await userHelper.getProductDetails(order.productDetails);
+        let address = order.address.address + ', ' + order.address.city + ', ' + order.address.state + ', ' + order.address.country + ', Pincode: ' + order.address.pincode;
+        let name = user.firstName + ' ' + user.secondName;
+
+        user.save(user).then(() => {
+            order.save(order).then(orderData => {
+                return res.status(200).send({
+                    message: `Order has been placed for ${name} at ${address}`,
+                    products,
+                    costBeforeTax: orderData.subTotalPrice,
+                    totalCost: orderData.totalPrice
+                })
+            }).catch(err => { throw err });
+        }).catch(err => { throw err });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send({
+            message: `${app.APP.SERVER.ERROR}`,
+            error
+        })
+    }
+}
+
+
+/******************************************************************************** */
+//User Profile management
 exports.getProfileDetails = async (req, res) => {
     try {
         const user = await userModel.findById(res.locals.userId);
@@ -288,6 +413,66 @@ exports.getCustomerAddress = async (req, res) => {
 
 }
 
+exports.getOrdersDetails = async (req, res) => {
+    try {
+        const user = await userModel.findById(res.locals.userId);
+        let noOfOrders = user.orders.length;
+        let ordersDetails = [];
+        for (let j = 0; j < noOfOrders; j++) {
+            let currentOrder = await orderModel.findById(user.orders[j]);
+            let productsInOrder = await userHelper.getProductDetails(currentOrder.productDetails);
+            let orderTime = moment(currentOrder.createdAt).format('DD MM YYYY, h:mm:ss a');
+            let orderDuration = moment(currentOrder.createdAt, 'MMMM Do YYYY, h:mm:ss a').fromNow();
+            ordersDetails.push({
+                orderPlacedOn: `Order was placed on ${orderTime},  ${orderDuration}`,
+                productsInOrder,
+                totalPrice: currentOrder.totalPrice
+            })
+        }
+        return res.status(200).send({
+            message: `success`,
+            ordersDetails
+        })
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send({
+            message: `${app.APP.SERVER.ERROR}`,
+            error
+        })
+    }
+}
+
+exports.changePassword = async (req, res) => {
+    try {
+        const user = await userModel.findById(res.locals.userId);
+        if (!req.body.currentPassword && !req.body.newPassword)
+            throw `An old and new passwords needs to provided`;
+
+        let currentPassword = req.body.currentPassword;
+        let passwordMatches = bcrypt.compareSync(currentPassword, user.password);
+
+        if (passwordMatches) {
+            if (req.body.currentPassword === req.body.newPassword)
+                throw `Old and new password is same`;
+            user.password = await bcrypt.hash(req.body.newPassword, saltRounds);
+            user.save(user).then(()=>{
+                return res.status(200).send({
+                    message: `Password has been changed successfully`
+                });
+            }).catch(err => {throw `Error while saving new password to DB - ${err}`});
+        }
+        else
+            return res.status(400).send({ message: `Password incorrect!` })
+    } 
+    catch (error) {
+        console.log(error);
+        return res.status(500).send({
+            message: `${app.APP.SERVER.ERROR}`,
+            error
+        })
+    }
+}
+
 exports.addCustomerAddress = async (req, res) => {
     try {
         const user = await userModel.findById(res.locals.userId);
@@ -337,62 +522,3 @@ exports.addCustomerAddress = async (req, res) => {
     }
 
 }
-
-exports.proceedToCheckout = async (req, res) => {
-    try {
-        const cart = await cartModel.findById(req.params.id);
-        const user = await userModel.findById(res.locals.userId);
-        if (!cart || cart.productDetails.length === 0)
-            throw `Cart not found or doesnt have any products added`
-        if(!req.body.address || !req.body.newAddress)
-            throw `Address is to be sent in req.body to place order`
-        // if(await checkForDuplicateAddress(user.addresses, req.body.newAddress))
-        //     throw `The new address provided is already saved. Use a different one`
-        let order = new orderModel({
-            userId: cart.userId,
-            userName: user.firstName + ' ' + user.secondName,
-            userEmail: cart.userEmail,
-            productDetails: cart.productDetails,
-            subTotalPrice: cart.subTotalPrice,
-            totalPrice: cart.totalPrice
-        })
-        if(req.body.newAddress) {
-            console.log(`adding the new address to order object`);
-            order.address= req.body.newAddress;
-            user.addresses.push(req.body.newAddress);
-            // user.save(user).then(()=>{
-            //     order.save(order).then(data =>{
-            //         return res.status(200).send({
-            //             message:`success`,
-            //             data
-            //         })
-            //     }).catch(err => {throw `Error while saving order data`})
-            // }).catch(err => {throw `Error while saving address to user`})
-        }else{
-            console.log(`adding existing address to order`);
-            order.address = req.body.address;
-            // order.save(order).then(data =>{
-            //     res.status(200).send({
-            //         message:`success`,
-            //         data
-            //     })
-            // }).catch(err => {throw `Error while saving order data`})
-        }
-        return res.status(200).send({
-            message: `success`,
-            order
-        })
-        
-    } catch (error) {
-        console.log(error);
-        return res.status(500).send({
-            message: `${app.APP.SERVER.ERROR}`,
-            error
-        })
-    }
-}
-
-//async function checkForDuplicateAddress(userAddresses, newAddress){}
-
-exports.reviewOrderDetails = async (req, res) => { }
-exports.placeOrder = async (req, res) => { }
