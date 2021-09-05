@@ -7,6 +7,11 @@ const orderSchema = new mongoose.Schema({
         type: ObjectId,
         required:true
     },
+    orderId: {
+        type: Number,
+        required: true,
+        unique:true
+    },
     userName : {
         type: String,
         required: true
@@ -43,6 +48,7 @@ const orderSchema = new mongoose.Schema({
             type: String,
         }
     },
+    invoice: String,
     subTotalPrice: {
         type: Number,
         required: true

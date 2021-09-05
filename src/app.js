@@ -1,6 +1,7 @@
 const express = require('express');
 require('./db/mongoose');
 const multer = require('multer');
+const passport = require('passport');
 
 //Importing routers
 const userRouter = require('./routers/user.router');
@@ -12,6 +13,8 @@ const productDefaultDataRouter = require('./routers/productDefaultData.router');
 const app = express();
 
 app.use(express.json());
+app.use(passport.initialize());
+app.use(passport.session());
 
 //Using routers
 app.use(userRouter);

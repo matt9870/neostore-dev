@@ -11,6 +11,10 @@ const productCategorySchema = new mongoose.Schema({
     productCount: {
         type: Number,
         default: 0
+    },
+    orderId:{
+        type: Number,
+        default: 10000
     }
 })
 

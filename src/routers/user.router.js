@@ -4,6 +4,18 @@ const upload = require(`../helpers/uploadProfilePic.helper`);
 const auth = require('../middlewares/auth');
 const userRouter = new express.Router();
 
+const passport = require('passport');
+require('../config/passport.config');
+
+//User authentication using Google
+userRouter.get('/googleAuth', passport.authenticate('google', {scope: ['profile', 'email']}));
+
+userRouter.get('/google/callback', 
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  function(req, res) {
+    res.redirect('/getDashboard');
+  });
+
 //User Authentication, recover password
 userRouter.post('/register', upload.single(`profile-pic`), userController.registerUser, auth.generateRegisterToken, (req, res) => {
     res.json({ res });

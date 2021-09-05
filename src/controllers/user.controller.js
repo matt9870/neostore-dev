@@ -1,6 +1,7 @@
 const userModel = require('../models/user.model');
 const cartModel = require(`../models/cart.model`);
 const orderModel = require('../models/orders.model');
+const serverDataModel = require('../models/productCategories.model');
 
 const moment = require('moment');
 const bcrypt = require('bcrypt');
@@ -10,6 +11,7 @@ const app = require('../config/default.json');
 const deleteFile = require('../helpers/deleteFile.helper');
 var sendEmailHelper = require('../helpers/sendResetEmail.helper');
 const userHelper = require('../helpers/user.helper');
+// const getInvoiceHtml = require('../helpers/getInvoiceHtml.helper');
 
 //User Authentication, recover password
 exports.registerUser = async (req, res, next) => {
@@ -274,7 +276,6 @@ exports.reviewOrderDetails = async (req, res) => {
         if (!order)
             throw `Order not found`
         const formatted = moment(order.createdAt).format('DD MM YYYY, h:mm:ss a');
-        // console.log(moment(order.createdAt, 'MMMM Do YYYY, h:mm:ss a').fromNow());
         let orderCreationTime = moment(order.createdAt, 'MMMM Do YYYY, h:mm:ss a').fromNow();
         res.status(200).send({
             message: `Order was created on ${formatted}`,
@@ -293,6 +294,9 @@ exports.reviewOrderDetails = async (req, res) => {
 exports.placeOrder = async (req, res) => {
     try {
         const order = await orderModel.findById(req.params.id);
+        const serverDataArray = await serverDataModel.find({});
+        const serverData = await serverDataModel.findById(serverDataArray[0]._id);
+
         if (!order)
             throw `Order not found`
         const user = await userModel.findById(res.locals.userId);
@@ -307,16 +311,28 @@ exports.placeOrder = async (req, res) => {
         let address = order.address.address + ', ' + order.address.city + ', ' + order.address.state + ', ' + order.address.country + ', Pincode: ' + order.address.pincode;
         let name = user.firstName + ' ' + user.secondName;
 
+
+        //generating unique order Id for sharing with customer
+        order.orderId = serverData.orderId;
+        serverData.orderId++;
+        //creating an invoice pdf
+        let { destination, filename } = await userHelper.generateInvoice(order);
+        if (destination === undefined)
+            throw `error while creating the invoice`
+        order.invoice = filename;
         user.save(user).then(() => {
-            order.save(order).then(orderData => {
-                return res.status(200).send({
-                    message: `Order has been placed for ${name} at ${address}`,
-                    products,
-                    costBeforeTax: orderData.subTotalPrice,
-                    totalCost: orderData.totalPrice
-                })
-            }).catch(err => { throw err });
-        }).catch(err => { throw err });
+            order.save(order).then(orderData => { //need to save serverData
+                serverData.save(serverData).then(() => {
+                    return res.status(200).send({
+                        message: `Order has been placed for ${name} at ${address}`,
+                        products,
+                        costBeforeTax: orderData.subTotalPrice,
+                        totalCost: orderData.totalPrice
+                    })
+                }).catch(err => { throw `error while saving server data - ${err}` })
+            }).catch(err => { throw `error while saving order data - ${err}` });
+        }).catch(err => { throw `error while saving user data - ${err}` });
+
     } catch (error) {
         console.log(error);
         return res.status(500).send({
@@ -455,15 +471,15 @@ exports.changePassword = async (req, res) => {
             if (req.body.currentPassword === req.body.newPassword)
                 throw `Old and new password is same`;
             user.password = await bcrypt.hash(req.body.newPassword, saltRounds);
-            user.save(user).then(()=>{
+            user.save(user).then(() => {
                 return res.status(200).send({
                     message: `Password has been changed successfully`
                 });
-            }).catch(err => {throw `Error while saving new password to DB - ${err}`});
+            }).catch(err => { throw `Error while saving new password to DB - ${err}` });
         }
         else
             return res.status(400).send({ message: `Password incorrect!` })
-    } 
+    }
     catch (error) {
         console.log(error);
         return res.status(500).send({
