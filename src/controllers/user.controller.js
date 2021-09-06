@@ -11,7 +11,8 @@ const app = require('../config/default.json');
 const deleteFile = require('../helpers/deleteFile.helper');
 var sendEmailHelper = require('../helpers/sendResetEmail.helper');
 const userHelper = require('../helpers/user.helper');
-// const getInvoiceHtml = require('../helpers/getInvoiceHtml.helper');
+var generator = require('generate-password');
+
 
 //User Authentication, recover password
 exports.registerUser = async (req, res, next) => {
@@ -45,6 +46,7 @@ exports.registerUser = async (req, res, next) => {
         newUser.save(newUser).then(userData => {
             newCart.save(newCart).then(cartData => {
                 res.locals.currentUser = {
+                    message: `User registered successfully!`,
                     userId: userData.id,
                     email: userData.email,
                     cartId: cartData._id
@@ -76,7 +78,7 @@ exports.registerUser = async (req, res, next) => {
     }
 }
 
-exports.login = async (req, res) => {
+/**exports.login = async (req, res) => {
     try {
         const userId = res.locals.currentUser.id;
         const user = await userModel.findById(userId);
@@ -91,7 +93,7 @@ exports.login = async (req, res) => {
         })
     }
 
-}
+} */
 
 exports.sendVerificationCode = async (req, res) => {
     try {
@@ -149,6 +151,94 @@ exports.resetPassword = async (req, res) => {
     }
 }
 
+exports.verifyUser = async (req, res, next) => {
+    const email = req.body.email;
+    const password = req.body.password;
+    userData.find({ email }, (err, user) => {
+        if (err || user.length === 0) {
+            return res.status(400).send({
+                message: `User Not Found! Check username and try again\n Error: ${err}`
+            })
+        }
+        var passwordMatch = bcrypt.compareSync(password, user[0].password);
+        if (!passwordMatch) {
+            return res.status(400).send({
+                message: `Credentials not valid, enter correct password`
+            })
+        }
+        res.locals.currentUser = {
+            userId: user.id,
+            email: user.email,
+            cartId: user.cartId
+        }
+        next();
+    })
+}
+
+exports.verifySSO = async (req, res, next) => {
+    try {
+        let user = JSON.parse(req.query.user);
+        let username = await user.displayName;
+        let profilePic = await user.picture;
+        let SSOprovider = await user.provider;
+        let email = await user.email;
+
+        userModel.find({ email }, async (err, user) => {
+            if (user.length !== 0) {
+                res.locals.currentUser = {
+                    message: `User authenticated.`,
+                    userId: user[0].id,
+                    email: user[0].email,
+                    cartId: user[0].cartId
+                }
+                next();
+            }
+            else {
+                var password = generator.generate({
+                    length: 8
+                });
+                console.log(password);
+                let hashedPassword = await bcrypt.hash(password, 8);
+
+                let usernameArray = username.split(' ');
+
+                let newUser = new userModel({
+                    firstName: usernameArray[0],
+                    secondName: usernameArray[1],
+                    email,
+                    profile_pic: {
+                        filename: profilePic
+                    },
+                    SSOprovider,
+                    password: hashedPassword
+                })
+                const newCart = new cartModel({
+                    userId: newUser._id,
+                    userEmail: newUser.email
+                })
+                newUser.cartId = newCart._id;
+
+                newUser.save(newUser).then(data => {
+                    newCart.save(newCart).then(() => {
+                        res.locals.currentUser = {
+                            message: `User registered successfully.`,
+                            userId: data.id,
+                            email: data.email,
+                            cartId: data.cartId
+                        }
+                        next();
+                    })
+                })
+            }
+        })
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send({
+            message: `${app.APP.SERVER.ERROR}`,
+            error
+        })
+    }
+}
 
 /******************************************************************************** */
 //Product management

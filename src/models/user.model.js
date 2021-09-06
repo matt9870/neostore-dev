@@ -13,7 +13,6 @@ const userSchema = new mongoose.Schema({
     },
     contactNo: {
         type: Number,
-        required: true,
         unique: true
         // validate: {
         //     validator: function(v) {
@@ -35,8 +34,7 @@ const userSchema = new mongoose.Schema({
         }
     },
     password: {
-        type: String,
-        required: true
+        type: String
     },
     profile_pic: {
         filename: { type: String, required: true },
@@ -46,7 +44,6 @@ const userSchema = new mongoose.Schema({
     gender: {
         type: String,
         enum: [`male`, `female`],
-        required: true
     },
     role: {
         type: String,
@@ -80,14 +77,11 @@ const userSchema = new mongoose.Schema({
     }],
     defaultAddress : ObjectId,
     resetCode: Number,
+    SSOprovider: String,
     cartId: {
         type: ObjectId
     },
 })
-
-function arrayLimit(val) {
-    return val.length <= 10;
-}
 
 const userModel = mongoose.model(`userModel`, userSchema);
 
