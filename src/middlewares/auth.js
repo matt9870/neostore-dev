@@ -7,8 +7,10 @@ const cartModel = require(`../models/cart.model`);
 
 //generate token when user is registred or logged in using either ways
 exports.generateToken = async (req, res) => {
+    let userId = await res.locals.currentUser.userId;
+    let cartId = await res.locals.currentUser.cartId;
     var token = jwt.sign({
-        id: res.locals.currentUser.userId,
+        id: userId,
         type: `customer`
     },
         secretKey.secret, { expiresIn: 3000 });
@@ -21,11 +23,10 @@ exports.generateToken = async (req, res) => {
     console.log(`token generated`);
     return res.status(200).send({
         message: res.locals.currentUser.message,
-        userId: res.locals.currentUser.userId,
-        cartId: res.locals.currentUser.cartId,
+        userId,
+        cartId,
         token
     })
-
 }
 
 //verify token for each api request

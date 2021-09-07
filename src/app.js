@@ -4,6 +4,7 @@ const multer = require('multer');
 const passport = require('passport');
 require('./config/passport.config');
 const swaggerUi = require("swagger-ui-express");
+const path = require('path');
 
 //Importing routers
 const userRouter = require('./routers/user.router');

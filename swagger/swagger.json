@@ -1,9 +1,590 @@
 {
-    "openapi": "3.0.0",
+	"openapi": "3.0.0",
 	"info": {
 		"title": "Neostore",
 		"contact": {},
 		"version": "1.0",
 		"description": "API Docs"
-	}
+	},
+	"servers": [
+		{
+			"url": "http://localhost:3000"
+		}
+	],
+	"components": {
+		"schemas": {
+			"User": {
+				"title": "User Model",
+				"required": [
+					"firstName",
+					"secondName",
+					"email"
+				],
+				"type": "object",
+				"properties": {
+					"firstName": {
+						"type": "string"
+					},
+					"secondName": {
+						"type": "string"
+					},
+					"contactNo": {
+						"type": "number"
+					},
+					"email": {
+						"type": "string"
+					},
+					"password": {
+						"type": "string"
+					},
+					"profile_pic": {
+						"filename": {
+							"type": "string"
+						},
+						"destination": {
+							"type": "string"
+						},
+						"fileType": {
+							"type": "string"
+						}
+					},
+					"gender": {
+						"type": "string"
+					},
+					"role": {
+						"type": "string"
+					},
+					"orders": {
+						"type": "string"
+					},
+					"addresses": [
+						{
+							"address": {
+								"type": "string"
+							},
+							"pincode": {
+								"type": "number"
+							},
+							"city": {
+								"type": "string"
+							},
+							"state": {
+								"type": "string"
+							},
+							"country": {
+								"type": "string"
+							}
+						}
+					],
+					"defaultAddress": {
+						"type": "string"
+					},
+					"resetCode": {
+						"type": "number"
+					},
+					"SSOprovider": {
+						"type": "string"
+					},
+					"cartId": {
+						"type": "string"
+					}
+				},
+				"example": {
+					"firstName": "John",
+					"secondName": "Doe",
+					"contactNo": "8785059487",
+					"email": "john@neostore.com",
+					"password": "",
+					"profile_pic": {
+						"filename": "",
+						"destination": "",
+						"fileType": ""
+					},
+					"gender": "",
+					"role": "",
+					"orders": "",
+					"addresses": [
+						{
+							"address": "",
+							"pincode": "",
+							"city": "",
+							"state": "",
+							"country": ""
+						}
+					],
+					"defaultAddress": "",
+					"resetCode": "",
+					"SSOprovider": "",
+					"cartId": ""
+				}
+			},
+			"Product": {
+				"title": "Product Model",
+				"type": "object",
+				"required": [
+					"productName",
+					"productSeller",
+					"productDesc",
+					"productFeatures",
+					"productCategory",
+					"productColors",
+					"productPrice",
+					"productStockCount"
+				],
+				"properties": {
+					"productName": {
+						"type": "String"
+					},
+					"productSeller": {
+						"type": "String"
+					},
+					"productDesc": {
+						"type": "String"
+					},
+					"productFeatures": {
+						"type": "String"
+					},
+					"productCategory": {
+						"type": "String"
+					},
+					"productColors": {
+						"type": "String"
+					},
+					"productImages": [
+						{
+							"filename": {
+								"type": "String"
+							},
+							"destination": {
+								"type": "String"
+							},
+							"fileType": {
+								"type": "String"
+							}
+						}
+					],
+					"defaultColor": {
+						"type": "String"
+					},
+					"rating": {
+						"count": {
+							"type": "Number"
+						},
+						"users": [
+							{
+								"type": "ObjectId"
+							}
+						],
+						"average": {
+							"type": "Number"
+						}
+					},
+					"productPrice": {
+						"type": "Number"
+					},
+					"productStockCount": {
+						"type": "Number"
+					},
+					"productOrderCount": {
+						"type": "Number"
+					},
+					"productOrderSuccess": {
+						"type": "Number"
+					}
+				}
+			},
+			"Orders": {
+				"title": "Order Model",
+				"type": "object",
+				"required": [
+					"userId",
+					"orderId",
+					"userName",
+					"userEmail",
+					"subTotalPrice",
+					"totalPrice",
+					"status"
+				],
+				"properties": {
+					"userId": {
+						"type": "ObjectId"
+					},
+					"orderId": {
+						"type": "Number"
+					},
+					"userName": {
+						"type": "String"
+					},
+					"userEmail": {
+						"type": "String"
+					},
+					"productDetails": [
+						{
+							"productId": {
+								"type": "ObjectId"
+							},
+							"productName": {
+								"type": "String"
+							},
+							"productSeller": {
+								"type": "String"
+							},
+							"productColor": {
+								"type": "String"
+							},
+							"productStock": {
+								"type": "Number"
+							},
+							"orderQuantity": {
+								"type": "Number"
+							},
+							"productImage": {
+								"type": "String"
+							},
+							"productPrice": {
+								"type": "Number"
+							},
+							"total": {
+								"type": "Number"
+							}
+						}
+					],
+					"address": {
+						"address": {
+							"type": "String"
+						},
+						"pincode": {
+							"type": "Number"
+						},
+						"city": {
+							"type": "String"
+						},
+						"state": {
+							"type": "String"
+						},
+						"country": {
+							"type": "String"
+						}
+					},
+					"invoice": {
+						"type": "String"
+					},
+					"subTotalPrice": {
+						"type": "Number"
+					},
+					"totalPrice": {
+						"type": "Number"
+					},
+					"status": {
+						"type": "String"
+					}
+				}
+			},
+			"Cart": {
+				"title": "Cart Model",
+				"type": "object",
+				"required": [
+					"userId",
+					"userEmail"
+				],
+				"properties": {
+					"userId": {
+						"type": "ObjectId"
+					},
+					"userEmail": {
+						"type": "String"
+					},
+					"productIds": [
+						{
+							"type": "ObjectId"
+						}
+					],
+					"productDetails": [
+						{
+							"productId": {
+								"type": "ObjectId"
+							},
+							"productName": {
+								"type": "String"
+							},
+							"productSeller": {
+								"type": "String"
+							},
+							"productColor": {
+								"type": "String"
+							},
+							"productStock": {
+								"type": "Number"
+							},
+							"orderQuantity": {
+								"type": "Number"
+							},
+							"productImage": {
+								"type": "String"
+							},
+							"productPrice": {
+								"type": "Number"
+							},
+							"total": {
+								"type": "Number"
+							}
+						}
+					],
+					"subTotalPrice": {
+						"type": "Number"
+					},
+					"totalPrice": {
+						"type": "Number"
+					}
+				}
+			},
+			"serverData": {
+				"title": "Product Server Data",
+				"type": "object",
+				"properties": {
+					"productCategories": [
+						{
+							"type": "String"
+						}
+					],
+					"topRatedProducts": [
+						{
+							"productId": {
+								"type": "ObjectId"
+							},
+							"averageRating": {
+								"type": "Number"
+							},
+							"count": {
+								"type": "Number"
+							}
+						}
+					],
+					"productCount": {
+						"type": "Number"
+					},
+					"orderId": {
+						"type": "Number"
+					}
+				}
+			},
+			"productColors": {
+				"title": "Product Colors Data",
+				"type": "object",
+				"properties": {
+					"productColors": [
+						{
+							"type": "String"
+						}
+					]
+				}
+			}
+		},
+		"securitySchemes": {
+			"bearerAuth": {
+				"type": "http",
+				"scheme": "bearer",
+				"in": "header",
+				"bearerFormat": "JWT"
+			}
+		}
+	},
+	"apis": [
+		"./src/routers/*router.js"
+	],
+	"paths": {
+		"/register": {
+			"post": {
+				"tags": [
+					"Homepage - Login/Register"
+				],
+				"summary": "add User to DB",
+				"description": "for users to create an account in Neostore",
+				"operationId": "register",
+				"parameters": [],
+				"requestBody": {
+					"description": "",
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"firstName": {
+										"type": "string"
+									},
+									"secondName": {
+										"type": "string"
+									},
+									"profile-pic": {
+										"type": "string",
+										"format": "binary"
+									},
+									"contactNo": {
+										"type": "string"
+									},
+									"email": {
+										"type": "string"
+									},
+									"password": {
+										"type": "string"
+									},
+									"gender": {
+										"type": "string"
+									}
+								}
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "User registered and token generated",
+						"headers": {}
+					}
+				},
+				"deprecated": false,
+				"security": []
+			}
+		},
+		"/login": {
+			"post": {
+				"tags": [
+					"Homepage - Login/Register"
+				],
+				"summary": "login to your account",
+				"description": "for users to login to their account in Neostore",
+				"operationId": "login",
+				"parameters": [],
+				"requestBody": {
+					"description": "",
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"email": {
+										"type": "string"
+									},
+									"password": {
+										"type": "string"
+									}
+								}
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "User authenticated and token generated",
+						"headers": {}
+					}
+				},
+				"deprecated": false,
+				"security": []
+			}
+		},
+		"/forgotPassword": {
+			"post": {
+				"tags": [
+					"Homepage - Login/Register"
+				],
+				"summary": "send reset code for recovering password",
+				"description": "for users to recover their password",
+				"operationId": "forgotPassword",
+				"parameters": [],
+				"requestBody": {
+					"description": "",
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"email": {
+										"type": "string"
+									}
+								}
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Verification code sent to user's email. Use the code to reset password",
+						"headers": {}
+					}
+				},
+				"deprecated": false,
+				"security": []
+			}
+		},
+		"/recoverPassword": {
+			"post": {
+				"tags": [
+					"Homepage - Login/Register"
+				],
+				"summary": "recover password",
+				"description": "use reset code to reset password for user's account",
+				"operationId": "recoverPassword",
+				"parameters": [],
+				"requestBody": {
+					"description": "",
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"verificationCode": {
+										"type": "number"
+									},
+									"password": {
+										"type": "string"
+									}
+								}
+							},
+							"example":{
+								"verificationCode":"23452",
+								"password":"password"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Verification code was verified and password reset successful.",
+						"headers": {}
+					}
+				},
+				"deprecated": false,
+				"security": []
+			}
+		},
+		"/profile": {
+			"get": {
+				"tags": [
+					"Manage Profile"
+				],
+				"summary": "Get Profile Details",
+				"description": "view profile details",
+				"operationId": "getProfile",
+				"parameters": [],
+				"responses": {
+					"200": {
+						"description": "Got the user profile",
+						"headers": {}
+					}
+				},
+				"deprecated": false
+			}
+		}
+
+	},
+	"security": [
+		{
+			"bearerAuth": []
+		}
+	]
 }

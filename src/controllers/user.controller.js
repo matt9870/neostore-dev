@@ -19,7 +19,6 @@ exports.registerUser = async (req, res, next) => {
     try {
         const userProfilePic = req.file;
         if (!req.file || !userProfilePic) {
-            deleteFile(`./images/user/${userProfilePic.filename}`);
             res.status(400).send({ message: "Upload an image in jpeg/jpg/png format or File was not uploaded" });
             return;
         }
@@ -130,10 +129,9 @@ exports.resetPassword = async (req, res) => {
         const userArray = await userModel.find({ resetCode: req.body.verificationCode });
         if (userArray.length === 0) {
             return res.status(400).send({
-                message: `Code has expired to reset password, Generate another code and try again`
+                message: `Code is incorrect or has expired. To reset password generate another code and try again`
             })
         }
-
         let user = await userModel.findById(userArray[0]._id);
         let hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
         user.password = hashedPassword;
@@ -154,7 +152,7 @@ exports.resetPassword = async (req, res) => {
 exports.verifyUser = async (req, res, next) => {
     const email = req.body.email;
     const password = req.body.password;
-    userData.find({ email }, (err, user) => {
+    userModel.find({ email }, (err, user) => {
         if (err || user.length === 0) {
             return res.status(400).send({
                 message: `User Not Found! Check username and try again\n Error: ${err}`
@@ -167,9 +165,10 @@ exports.verifyUser = async (req, res, next) => {
             })
         }
         res.locals.currentUser = {
-            userId: user.id,
-            email: user.email,
-            cartId: user.cartId
+            message:`User verified!`,
+            userId: user[0]._id,
+            email: user[0].email,
+            cartId: user[0].cartId
         }
         next();
     })
@@ -437,6 +436,7 @@ exports.placeOrder = async (req, res) => {
 //User Profile management
 exports.getProfileDetails = async (req, res) => {
     try {
+        console.log(`userId - `,res.locals.userId);
         const user = await userModel.findById(res.locals.userId);
         if (!user)
             throw `user data was not found`
