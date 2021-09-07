@@ -436,7 +436,6 @@ exports.placeOrder = async (req, res) => {
 //User Profile management
 exports.getProfileDetails = async (req, res) => {
     try {
-        console.log(`userId - `,res.locals.userId);
         const user = await userModel.findById(res.locals.userId);
         if (!user)
             throw `user data was not found`
@@ -446,7 +445,8 @@ exports.getProfileDetails = async (req, res) => {
             secondName: user.secondName,
             gender: user.gender,
             mobile: user.contactNo,
-            email: user.email
+            email: user.email,
+            profilePic: user.profile_pic.filename
         }
         res.status(200).send({
             message: 'success',
@@ -466,24 +466,73 @@ exports.updateProfileDetails = async (req, res) => {
     try {
         const user = await userModel.findById(res.locals.userId);
         const newProfileDetails = req.body.profileDetails;
+        let profileChangeStatus = false;
         if (!user)
             throw `user data was not found`
-        if (newProfileDetails.firstName)
-            user.firstName = newProfileDetails.firstName;
-        if (newProfileDetails.secondName)
-            user.secondName = newProfileDetails.secondName;
-        if (newProfileDetails.gender)
-            user.gender = newProfileDetails.gender;
-        if (newProfileDetails.mobile)
-            user.mobile = newProfileDetails.mobile;
-        user.save(user).then(data => {
-            res.status(200).send({
-                message: `success`,
-                data
+        if (newProfileDetails.firstName){
+            if(user.firstName !== newProfileDetails.firstName){
+                user.firstName = newProfileDetails.firstName;
+                console.log(`name change`);
+                profileChangeStatus=true
+            }
+        }
+        if (newProfileDetails.secondName){
+            if(user.secondName !== newProfileDetails.secondName){
+                user.secondName = newProfileDetails.secondName;
+                console.log(`name change`);
+                profileChangeStatus=true
+            }
+        }
+        if (newProfileDetails.gender){
+            if(user.gender !== newProfileDetails.gender.toLowerCase()){
+                user.gender = newProfileDetails.gender.toLowerCase();
+                console.log(`gender change`);
+                profileChangeStatus=true
+            }
+        }
+
+        if (newProfileDetails.mobile){
+            if(user.contactNo != newProfileDetails.mobile){
+                user.contactNo = newProfileDetails.mobile;
+                console.log(`mobile change`);
+                profileChangeStatus=true
+            }
+        }
+        if(profileChangeStatus){
+            user.save(user).then(data => {
+                let userData = {
+                    userId: data._id,
+                    firstName: data.firstName,
+                    secondName: data.secondName,
+                    gender: data.gender,
+                    mobile: data.contactNo,
+                    email: data.email,
+                    profilePic: data.profile_pic.filename
+                }
+                res.status(200).send({
+                    message: `success`,
+                    userData
+                })
+            }).catch(err => {
+                throw err;
             })
-        }).catch(err => {
-            throw err;
-        })
+        }        
+        else {
+            console.log(`no profile change`);
+            let userData = {
+                userId: user._id,
+                firstName: user.firstName,
+                secondName: user.secondName,
+                gender: user.gender,
+                mobile: user.contactNo,
+                email: user.email,
+                profilePic: user.profile_pic.filename
+            }
+            res.status(200).send({
+                message: `No data given to update profile or given details are the same as before`,
+                userData
+            })
+        }
     } catch (error) {
         console.log(error);
         return res.status(500).send({
@@ -552,10 +601,9 @@ exports.changePassword = async (req, res) => {
     try {
         const user = await userModel.findById(res.locals.userId);
         if (!req.body.currentPassword && !req.body.newPassword)
-            throw `An old and new passwords needs to provided`;
+            throw `Current password and new passwords need to be provided`;
 
-        let currentPassword = req.body.currentPassword;
-        let passwordMatches = bcrypt.compareSync(currentPassword, user.password);
+        let passwordMatches = bcrypt.compareSync(req.body.currentPassword, user.password);
 
         if (passwordMatches) {
             if (req.body.currentPassword === req.body.newPassword)
@@ -563,7 +611,7 @@ exports.changePassword = async (req, res) => {
             user.password = await bcrypt.hash(req.body.newPassword, saltRounds);
             user.save(user).then(() => {
                 return res.status(200).send({
-                    message: `Password has been changed successfully`
+                    message: `Password has been updated successfully`
                 });
             }).catch(err => { throw `Error while saving new password to DB - ${err}` });
         }

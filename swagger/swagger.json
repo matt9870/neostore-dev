@@ -470,6 +470,10 @@
 										"type": "string"
 									}
 								}
+							},
+							"example": {
+								"email": "mick@neostore.com",
+								"password": "password"
 							}
 						}
 					},
@@ -544,9 +548,9 @@
 									}
 								}
 							},
-							"example":{
-								"verificationCode":"23452",
-								"password":"password"
+							"example": {
+								"verificationCode": "23452",
+								"password": "password"
 							}
 						}
 					},
@@ -579,8 +583,181 @@
 				},
 				"deprecated": false
 			}
+		},
+		"/updateprofile": {
+			"post": {
+				"tags": [
+					"Manage Profile"
+				],
+				"summary": "Update Profile Details",
+				"description": "Update profile details",
+				"operationId": "updateProfile",
+				"requestBody": {
+					"description": "",
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"profileDetails": {
+										"firstName": {
+											"type": "string"
+										},
+										"secondName": {
+											"type": "string"
+										},
+										"gender": {
+											"type": "string"
+										},
+										"mobile": {
+											"type": "number"
+										}
+									}
+								}
+							},
+							"example": {
+								"profileDetails": {
+									"firstName": "Mick",
+									"secondName": "Jagger",
+									"gender": "Male",
+									"mobile": "9023415670"
+								}
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "User profile updated",
+						"headers": {}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/getCustAddress": {
+			"get": {
+				"tags": [
+					"Manage Profile"
+				],
+				"summary": "Get user addresses",
+				"responses": {
+					"200": {
+						"description": "Got user addresses",
+						"headers": {}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/getOrders": {
+			"get": {
+				"tags": [
+					"Manage Profile"
+				],
+				"summary": "Get user orders",
+				"responses": {
+					"200": {
+						"description": "Got user's orders",
+						"headers": {}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/addCustAddress": {
+			"post": {
+				"tags": [
+					"Manage Profile"
+				],
+				"summary": "Add new address",
+				"requestBody": {
+					"description": "",
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"profileDetails": {
+										"address": {
+											"type": "string"
+										},
+										"pincode": {
+											"type": "number"
+										},
+										"city": {
+											"type": "string"
+										},
+										"state": {
+											"type": "string"
+										},
+										"country": {
+											"type": "string"
+										}
+									}
+								}
+							},
+							"example": {
+								"address": "6th Avenue",
+								"pincode": 345678,
+								"city": "Onty",
+								"state": "LA",
+								"country": "USA"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Address added",
+						"headers": {}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/changePassword": {
+			"post": {
+				"tags": [
+					"Manage Profile"
+				],
+				"summary": "Change password",
+				"requestBody": {
+					"description": "",
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"profileDetails": {
+										"currentPassword": {
+											"type": "string"
+										},
+										"newPassword": {
+											"type": "string"
+										}
+									}
+								}
+							},
+							"example": {
+								"currentPassword":"password",
+								"newPassword": "mick@01"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Password has been updated successfully",
+						"headers": {}
+					}
+				},
+				"deprecated": false
+			}
 		}
-
 	},
 	"security": [
 		{
