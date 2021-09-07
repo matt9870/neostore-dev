@@ -21,11 +21,11 @@ productRouter.post('/addProductImages/:id', upload.fields([{
 
 /*********************************************************************************** */
 //user
-productRouter.get('/getDashboard', productController.getDashboard, (req, res) => {
+productRouter.get('/getDashboard',auth.verifyToken, productController.getDashboard, (req, res) => {
     res.json({ res });
 })
 
-productRouter.post('/find/:keyword', productController.searchForProduct, (req,res) => {
+productRouter.post('/find/:keyword', auth.verifyToken, productController.searchForProduct, (req,res) => {
     res.json({res});
 })
 
@@ -33,20 +33,20 @@ productRouter.get('/commonProducts', productController.getCommonProducts, (req,r
     res.json({res});
 })
 
-productRouter.post('/commonProducts', productController.filterCommonProducts, (req,res) => {
+productRouter.post('/filterCommonProducts', productController.filterCommonProducts, (req,res) => {
     res.json({res});
 })
 
 
-productRouter.get('/getProductDetails/:id&:color', productController.getProductDetails, (req, res) => {
+productRouter.get('/getProductDetails/:id&:color',  productController.getProductDetails, (req, res) => {
     res.json({ res })
 })
 
-productRouter.post('/addToCart/:id', auth.verifyToken, productController.addProductToCart, (req, res) => {
+productRouter.post('/addToCart/:id&:color', auth.verifyToken, productController.addProductToCart, (req, res) => {
     res.json({ res });
 })
 
-productRouter.post(`/addRating/:id`,auth.verifyToken, productController.addProductRating, (req,res) => {
+productRouter.post(`/addRating/:id&:rating`,auth.verifyToken, productController.addProductRating, (req,res) => {
     res.json({res});
 })
 

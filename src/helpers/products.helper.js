@@ -32,6 +32,7 @@ async function getProductOfEachCategory(productCategories) {
         }).then(data => {
             if (data) {
                 productOfEachCategory.push({
+                    id: data._id,
                     name: data.productName,
                     image: data.productImages[0].filename,
                     rating: data.rating.average,
@@ -43,11 +44,10 @@ async function getProductOfEachCategory(productCategories) {
     return productOfEachCategory;
 }
 
-async function getProductImagesDefaultColor(product) {
-    const defaultColor = product.defaultColor;
+async function getProductImagesForColor(product,color) {
     let noOfImages = product.productImages.length;
     const productImages = [];
-    const regExpColor = new RegExp(defaultColor);
+    const regExpColor = new RegExp(color);
     for (let j = 0; j < noOfImages; j++) {
         const imageColorIsDefault = regExpColor.test(product.productImages[j].filename)
         if (imageColorIsDefault) {
@@ -80,21 +80,6 @@ async function addQuantity(cart, product, productColorSelected) {
     }
     else
         return addNewProduct(cart, product, productColorSelected);
-    while (j < noOfProducts) {
-        if (cart.productDetails[j].productId.equals(product._id)) {
-            cart.productDetails[j].orderQuantity = cart.productDetails[j].orderQuantity + 1;
-            cart.productDetails[j].total = cart.productDetails[j].total + product.productPrice;
-            if (cart.subTotalPrice === undefined)
-                cart.subTotalPrice = product.productPrice;
-            else
-                cart.subTotalPrice = cart.subTotalPrice + product.productPrice;
-            cart.totalPrice = 1.05 * cart.subTotalPrice;
-            console.log(`added the quantity of the existing product`);
-            return cart;
-        }
-        j++;
-    }
-
 }
 
 async function addNewProduct(cart, product, productColorSelected) {
@@ -201,6 +186,7 @@ async function gettopRatedProducts() {
     while (j < arrayLength) {
         const product = await productModel.findById(serverData.topRatedProducts[j].productId)
         topRatedProducts.push({
+            id: product._id,
             name: product.productName,
             image: product.productImages[0].filename,
             rating: product.rating.average,
@@ -214,10 +200,12 @@ async function gettopRatedProducts() {
 async function filterProductData(product) {
     try {
         let filteredData = {
+            id: product._id,
             name: product.productName,
             image: product.productImages[0].filename,
             rating: product.rating.average,
-            price: product.productPrice
+            price: product.productPrice,
+            colors: product.productColors
         }
         return filteredData;
     } catch (error) {
@@ -278,4 +266,4 @@ async function sortProducts(products, basedOn, order) {
     return sortedProductsToReturn;
 }
 
-module.exports = { getFileDetails, deleteFiles, getProductOfEachCategory, getProductImagesDefaultColor, addQuantity, addNewProduct, addRatingToServerData, addProductCount, gettopRatedProducts, filterProductData, sortProducts, filterForCategories, filterForColors }
+module.exports = { getFileDetails, deleteFiles, getProductOfEachCategory, getProductImagesForColor, addQuantity, addNewProduct, addRatingToServerData, addProductCount, gettopRatedProducts, filterProductData, sortProducts, filterForCategories, filterForColors }

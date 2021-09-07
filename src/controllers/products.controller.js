@@ -101,7 +101,7 @@ exports.getDashboard = async (req, res) => {
         var productOfEachCategory = await productsHelper.getProductOfEachCategory(productCategories);
 
         res.status(200).send({
-            msg: `Got the data`,
+            msg: `Got the dashboard`,
             topRatedProducts,
             productOfEachCategory
         });
@@ -234,9 +234,14 @@ exports.filterCommonProducts = async (req, res) => {
 exports.getProductDetails = async (req, res) => {
     try {
         const product = await productModel.findById(req.params.id);
-        const productImages = await productsHelper.getProductImagesDefaultColor(product);
+        let color=product.defaultColor;
+        if(product.productColors.includes(req.params.color)){
+            color=req.params.color;
+        }
+        let productImages = await productsHelper.getProductImagesForColor(product, color);
         res.status(200).send({
             message: `Got the data`,
+            id: product._id,
             name: product.productName,
             rating: product.rating.average,
             price: product.productPrice,
@@ -246,6 +251,7 @@ exports.getProductDetails = async (req, res) => {
             images: productImages
         })
     } catch (error) {
+        console.log(error);
         res.status(500).send({
             message: `Server error, Something broke`,
             error
@@ -255,22 +261,21 @@ exports.getProductDetails = async (req, res) => {
 
 exports.addProductToCart = async (req, res) => {
     try {
-        const param = req.params.id;
-        const params = param.split('&');
+        let productId = req.params.id;
+        let color = req.params.color;
         const user = await userModel.findById(res.locals.userId);
-        const product = await productModel.findById(params[0]);
-        const productColorSelected = params[1];
+        const product = await productModel.findById(productId);
         let cart = await cartModel.findById(user.cartId);
         if (!product)
             throw `Product doesn't exist`
-        if (!(product.productColors.includes(productColorSelected)))
+        if (!(product.productColors.includes(color)))
             throw `Product Color doesn't exist`
 
         if (cart.productIds.includes(product._id)) {
-            cart = await productsHelper.addQuantity(cart, product, productColorSelected);
+            cart = await productsHelper.addQuantity(cart, product, color);
         }
         else {
-            cart = await productsHelper.addNewProduct(cart, product, productColorSelected);
+            cart = await productsHelper.addNewProduct(cart, product, color);
         }
         cart.save(cart).then(cartData => {
             res.status(200).send({
@@ -294,14 +299,16 @@ exports.addProductToCart = async (req, res) => {
 
 exports.addProductRating = async (req, res) => {
     try {
-        const param = req.params.id;
-        const params = param.split('&');
-        let product = await productModel.findById(params[0]);
+        let productId = req.params.id;
+        let rating = parseInt(req.params.rating);
+        let product = await productModel.findById(productId);
 
-        if (!(params[1] < 5 && params[1] > 0))
+        if (!(rating < 5 && rating > 0))
             throw `Rating has to be between 0 and 5`
         if (!product)
             throw `Product doesn't exist`
+        if(product.rating.users.includes(res.locals.userId))
+            throw `You have already rated this product`
         product.rating.count += 1;
         product.rating.users.push(res.locals.userId);
 
@@ -309,24 +316,22 @@ exports.addProductRating = async (req, res) => {
         let ratingCount = product.rating.count;
 
         if (avgRating === 0) {
-            product.rating.average += params[1];
+            product.rating.average += rating;
         }
         else {
-            let receivedRating = parseInt(params[1])
+            let receivedRating = rating
             product.rating.average = (((avgRating * (ratingCount - 1)) + receivedRating) / (ratingCount)).toFixed(2);
             console.log(`after math`, product.rating.average);
         }
 
-        await productsHelper.addRatingToServerData(params[0], product.rating);
+        await productsHelper.addRatingToServerData(productId, product.rating);
 
         product.save(product).then(data => {
             return res.status(200).send({
+                message:`Thanks for rating the product`,
                 'Product Rating': data.rating
             })
         })
-        // res.status(400).send({
-        //     'Product Rating': product.rating
-        // })
     } catch (error) {
         console.log(error);
         return res.status(500).send({

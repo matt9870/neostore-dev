@@ -473,7 +473,7 @@
 							},
 							"example": {
 								"email": "mick@neostore.com",
-								"password": "password"
+								"password": "mick@01"
 							}
 						}
 					},
@@ -681,29 +681,33 @@
 								"properties": {
 									"profileDetails": {
 										"address": {
-											"type": "string"
-										},
-										"pincode": {
-											"type": "number"
-										},
-										"city": {
-											"type": "string"
-										},
-										"state": {
-											"type": "string"
-										},
-										"country": {
-											"type": "string"
+											"address": {
+												"type": "string"
+											},
+											"pincode": {
+												"type": "number"
+											},
+											"city": {
+												"type": "string"
+											},
+											"state": {
+												"type": "string"
+											},
+											"country": {
+												"type": "string"
+											}
 										}
 									}
 								}
 							},
 							"example": {
-								"address": "6th Avenue",
-								"pincode": 345678,
-								"city": "Onty",
-								"state": "LA",
-								"country": "USA"
+								"address": {
+									"address": "6th Avenue",
+									"pincode": 345678,
+									"city": "Onty",
+									"state": "LA",
+									"country": "USA"
+								}
 							}
 						}
 					},
@@ -742,7 +746,7 @@
 								}
 							},
 							"example": {
-								"currentPassword":"password",
+								"currentPassword": "password",
 								"newPassword": "mick@01"
 							}
 						}
@@ -752,6 +756,485 @@
 				"responses": {
 					"200": {
 						"description": "Password has been updated successfully",
+						"headers": {}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/getDashboard": {
+			"get": {
+				"tags": [
+					"Products Module"
+				],
+				"summary": "Get Dashboard",
+				"responses": {
+					"200": {
+						"description": "Got the dashboard",
+						"headers": {}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/find/{keyword}": {
+			"post": {
+				"tags": [
+					"Products Module"
+				],
+				"summary": "Change password",
+				"parameters": [
+					{
+						"name": "keyword",
+						"in": "path",
+						"description": "search keyowrd",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "real"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Password has been updated successfully",
+						"headers": {}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/commonProducts": {
+			"get": {
+				"tags": [
+					"Products Module"
+				],
+				"summary": "Get all products",
+				"responses": {
+					"200": {
+						"description": "Got common products",
+						"headers": {}
+					}
+				},
+				"deprecated": false,
+				"security": []
+			}
+		},
+		"/filterCommonProducts": {
+			"post": {
+				"tags": [
+					"Products Module"
+				],
+				"summary": "Filter products",
+				"requestBody": {
+					"description": "Choose categories and color",
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"categories": [
+										{
+											"type": "string"
+										}
+									],
+									"colors": [
+										{
+											"type": "string"
+										}
+									],
+									"sort": {
+										"basedOn": {
+											"type": "string"
+										},
+										"order": {
+											"type": "string"
+										}
+									}
+								}
+							},
+							"example": {
+								"categories": [
+									"mobiles",
+									"earphones"
+								],
+								"colors": [],
+								"sort": {
+									"basedOn": "price",
+									"order": "desc"
+								}
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Password has been updated successfully",
+						"headers": {}
+					}
+				},
+				"deprecated": false,
+				"security": []
+			}
+		},
+		"/getProductDetails/{id}&{color}": {
+			"get": {
+				"tags": [
+					"Products Module"
+				],
+				"summary": "Change password",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"description": "product objectId",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "612bcfedb01b0298c4fe7523"
+						}
+					},
+					{
+						"name": "color",
+						"in": "path",
+						"description": "product color",
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "red"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Password has been updated successfully",
+						"headers": {}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/addToCart/{id}&{color}": {
+			"post": {
+				"tags": [
+					"Products Module"
+				],
+				"summary": "Add product to cart",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"description": "product objectId",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "612bcfedb01b0298c4fe7523"
+						}
+					},
+					{
+						"name": "color",
+						"in": "path",
+						"description": "product color",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "red"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Product added to Cart",
+						"headers": {}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/addRating/{id}&{rating}": {
+			"post": {
+				"tags": [
+					"Products Module"
+				],
+				"summary": "Add product to cart",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"description": "product objectId",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": "612bcfedb01b0298c4fe7523"
+						}
+					},
+					{
+						"name": "rating",
+						"in": "path",
+						"description": "product rating",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "number",
+							"example": 4
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Thanks for rating the product",
+						"headers": {}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/getCart": {
+			"get": {
+				"tags": [
+					"Cart Module"
+				],
+				"summary": "Get Cart Details",
+				"responses": {
+					"200": {
+						"description": "got cart data",
+						"headers": {}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/updateCart": {
+			"post": {
+				"tags": [
+					"Cart Module"
+				],
+				"summary": "Update Cart Data",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"cart": {
+										"productIds": [
+											{
+												"type": "string"
+											}
+										],
+										"_id": {
+											"type": "string"
+										},
+										"productDetails": [
+											{
+												"_id": {
+													"type": "string"
+												},
+												"productId": {
+													"type": "string"
+												},
+												"productName": {
+													"type": "string"
+												},
+												"productSeller": {
+													"type": "string"
+												},
+												"productColor": {
+													"type": "string"
+												},
+												"productImage": {
+													"type": "string"
+												},
+												"productStock": {
+													"type": "number"
+												},
+												"orderQuantity": {
+													"type": "number"
+												},
+												"productPrice": {
+													"type": "number"
+												},
+												"total": {
+													"type": "number"
+												}
+											}
+										]
+									}
+								}
+							},
+							"example": {
+								"cart": {
+									"productIds": [
+										"612bcfedb01b0298c4fe7523"
+									],
+									"_id": "612ca96183165d5f4bd2f42b",
+									"productDetails": [
+										{
+											"_id": "612cd7f78886caaa925eb384",
+											"productId": "612bcfedb01b0298c4fe7523",
+											"productName": "Narzo",
+											"productSeller": "Realme",
+											"productColor": "silver",
+											"productImage": "silver-Narzo-1630305205272-639349922.jpeg",
+											"productStock": 40,
+											"orderQuantity": 1,
+											"productPrice": 20000,
+											"total": 20000
+										}
+									]
+								}
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Password has been updated successfully",
+						"headers": {}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/proceedToBuy": {
+			"get": {
+				"tags": [
+					"Checkout Module"
+				],
+				"summary": "Get Addresses of user",
+				"responses": {
+					"200": {
+						"description": "Addresses of user found",
+						"headers": {}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/proceedToCheckout/{id}": {
+			"post": {
+				"tags": [
+					"Checkout Module"
+				],
+				"summary": "Select address for placing order",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"description": "cart objectId",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": ""
+						}
+					}
+				],
+				"requestBody": {
+					"description": "req.body contains address named under 'address' or 'newAddress'",
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"address": {
+										"address": {
+											"type": "string"
+										},
+										"pincode": {
+											"type": "string"
+										},
+										"city": {
+											"type": "string"
+										},
+										"state": {
+											"type": "string"
+										},
+										"country": {
+											"type": "string"
+										}
+									}
+								}
+							},
+							"example": {
+								"address": {
+									"address": "Wall St, 2nd Floor",
+									"pincode": 100005,
+									"city": "New York City",
+									"state": "New York",
+									"country": "USA"
+								}
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Address selected for placing order",
+						"headers": {}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/reviewOrderDetails/{id}": {
+			"get": {
+				"tags": [
+					"Checkout Module"
+				],
+				"summary": "Get order details before placing the order",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"description": "order objectId",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": ""
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Got final order details",
+						"headers": {}
+					}
+				},
+				"deprecated": false
+			}
+		},
+		"/placeOrder/{id}": {
+			"post": {
+				"tags": [
+					"Checkout Module"
+				],
+				"summary": "Place order",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"description": "order objectId",
+						"required": true,
+						"style": "simple",
+						"schema": {
+							"type": "string",
+							"example": ""
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Order has been placed successfully",
 						"headers": {}
 					}
 				},

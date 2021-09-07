@@ -165,7 +165,7 @@ exports.verifyUser = async (req, res, next) => {
             })
         }
         res.locals.currentUser = {
-            message:`User verified!`,
+            message: `User verified!`,
             userId: user[0]._id,
             email: user[0].email,
             cartId: user[0].cartId
@@ -248,7 +248,7 @@ exports.getCartDetails = async (req, res) => {
         if (!cart)
             throw `Cart not found`
         res.status(200).send({
-            message: `success`,
+            message: `got cart data`,
             cart
         })
     } catch (error) {
@@ -307,19 +307,24 @@ exports.proceedToCheckout = async (req, res) => {
     try {
         const cart = await cartModel.findById(req.params.id);
         const user = await userModel.findById(res.locals.userId);
+        const serverDataArray = await serverDataModel.find({});
+        let serverData = await serverDataModel.findById(serverDataArray[0]._id);
         if (!cart || cart.productDetails.length === 0)
             throw `Cart not found or doesnt have any products added`
         if (!req.body.address && !req.body.newAddress)
             throw `Address should be sent in req.body to place order`
 
+        let orderId = serverData.orderId + 1;
         let order = new orderModel({
             userId: cart.userId,
             userName: user.firstName + ' ' + user.secondName,
             userEmail: cart.userEmail,
             productDetails: cart.productDetails,
             subTotalPrice: cart.subTotalPrice,
-            totalPrice: cart.totalPrice
+            totalPrice: cart.totalPrice,
+            orderId
         })
+        serverData.orderId++;
         if (req.body.newAddress) {
             let duplicateAddressStatus = true;
             duplicateAddressStatus = await userHelper.checkForDuplicateAddress(user.addresses, req.body.newAddress);
@@ -329,26 +334,33 @@ exports.proceedToCheckout = async (req, res) => {
                 console.log(`adding the new address to order object`);
                 order.address = req.body.newAddress;
                 user.addresses.push(req.body.newAddress);
-                user.save(user).then(() => {
-                    order.save(order).then(data => {
-                        return res.status(200).send({
-                            message: `success`,
-                            data
-                        })
-                    }).catch(err => { throw `Error while saving order data` })
-                }).catch(err => { throw `Error while saving address to user` })
+
+                serverData.save(serverData).then(() => {
+                    user.save(user).then(() => {
+                        order.save(order).then(data => {
+                            return res.status(200).send({
+                                message: `success`,
+                                data
+                            })
+                        }).catch(err => { throw `Error while saving order data`, err })
+                    }).catch(err => { throw `Error while saving address to user`, err })
+                }).catch(err => { throw `error while saving server data`, err })
+
             }
         }
         else {
             console.log(`adding existing address to order`);
             order.address = req.body.address;
 
-            order.save(order).then(data => {
-                res.status(200).send({
-                    message: `success`,
-                    data
-                })
-            }).catch(err => { throw `Error while saving order data - ${err}` })
+            serverData.save(serverData).then(() => {
+                order.save(order).then(data => {
+                    res.status(200).send({
+                        message: `success`,
+                        data
+                    })
+                }).catch(err => { throw `Error while saving order data - ${err}` })
+            }).catch(err => { throw `error while saving server data`, err })
+
         }
     } catch (error) {
         console.log(error);
@@ -368,7 +380,7 @@ exports.reviewOrderDetails = async (req, res) => {
         let orderCreationTime = moment(order.createdAt, 'MMMM Do YYYY, h:mm:ss a').fromNow();
         res.status(200).send({
             message: `Order was created on ${formatted}`,
-            additionalMessage: `Order was created ago ${orderCreationTime}`,
+            additionalMessage: `Order was created ${orderCreationTime}`,
             order
         })
     } catch (error) {
@@ -385,38 +397,51 @@ exports.placeOrder = async (req, res) => {
         const order = await orderModel.findById(req.params.id);
         const serverDataArray = await serverDataModel.find({});
         const serverData = await serverDataModel.findById(serverDataArray[0]._id);
-
         if (!order)
             throw `Order not found`
         const user = await userModel.findById(res.locals.userId);
+        let cart = await cartModel.findById(user.cartId);
+
         if (!user)
             throw `User was not found`
         if (order.status)
             throw `Attempting to place an order that has already been placed`
         order.status = true;
         user.orders.push(order._id);
-
+        cart.productIds = [];
+        cart.productDetails = [];
+        cart.subTotalPrice = 0;
+        cart.totalPrice = 0;
         let products = await userHelper.getProductDetails(order.productDetails);
         let address = order.address.address + ', ' + order.address.city + ', ' + order.address.state + ', ' + order.address.country + ', Pincode: ' + order.address.pincode;
         let name = user.firstName + ' ' + user.secondName;
-
+        let message = ``
 
         //generating unique order Id for sharing with customer
         order.orderId = serverData.orderId;
         serverData.orderId++;
         //creating an invoice pdf
         let { destination, filename } = await userHelper.generateInvoice(order);
+
         if (destination === undefined)
             throw `error while creating the invoice`
         order.invoice = filename;
+
+        cart.save(cart).then(() => {
+            message = `User's cart has been emptied and `
+        }).catch(err => {
+            throw `error while emptying and saving cart data`, err
+        })
+
         user.save(user).then(() => {
-            order.save(order).then(orderData => { //need to save serverData
+            order.save(order).then(orderData => {
                 serverData.save(serverData).then(() => {
                     return res.status(200).send({
-                        message: `Order has been placed for ${name} at ${address}`,
+                        message: message + `Order has been placed for ${name} at ${address}`,
                         products,
                         costBeforeTax: orderData.subTotalPrice,
-                        totalCost: orderData.totalPrice
+                        totalCost: orderData.totalPrice,
+                        invoice: orderData.invoice
                     })
                 }).catch(err => { throw `error while saving server data - ${err}` })
             }).catch(err => { throw `error while saving order data - ${err}` });
@@ -469,36 +494,36 @@ exports.updateProfileDetails = async (req, res) => {
         let profileChangeStatus = false;
         if (!user)
             throw `user data was not found`
-        if (newProfileDetails.firstName){
-            if(user.firstName !== newProfileDetails.firstName){
+        if (newProfileDetails.firstName) {
+            if (user.firstName !== newProfileDetails.firstName) {
                 user.firstName = newProfileDetails.firstName;
                 console.log(`name change`);
-                profileChangeStatus=true
+                profileChangeStatus = true
             }
         }
-        if (newProfileDetails.secondName){
-            if(user.secondName !== newProfileDetails.secondName){
+        if (newProfileDetails.secondName) {
+            if (user.secondName !== newProfileDetails.secondName) {
                 user.secondName = newProfileDetails.secondName;
                 console.log(`name change`);
-                profileChangeStatus=true
+                profileChangeStatus = true
             }
         }
-        if (newProfileDetails.gender){
-            if(user.gender !== newProfileDetails.gender.toLowerCase()){
+        if (newProfileDetails.gender) {
+            if (user.gender !== newProfileDetails.gender.toLowerCase()) {
                 user.gender = newProfileDetails.gender.toLowerCase();
                 console.log(`gender change`);
-                profileChangeStatus=true
+                profileChangeStatus = true
             }
         }
 
-        if (newProfileDetails.mobile){
-            if(user.contactNo != newProfileDetails.mobile){
+        if (newProfileDetails.mobile) {
+            if (user.contactNo != newProfileDetails.mobile) {
                 user.contactNo = newProfileDetails.mobile;
                 console.log(`mobile change`);
-                profileChangeStatus=true
+                profileChangeStatus = true
             }
         }
-        if(profileChangeStatus){
+        if (profileChangeStatus) {
             user.save(user).then(data => {
                 let userData = {
                     userId: data._id,
@@ -516,7 +541,7 @@ exports.updateProfileDetails = async (req, res) => {
             }).catch(err => {
                 throw err;
             })
-        }        
+        }
         else {
             console.log(`no profile change`);
             let userData = {
@@ -581,7 +606,8 @@ exports.getOrdersDetails = async (req, res) => {
             ordersDetails.push({
                 orderPlacedOn: `Order was placed on ${orderTime},  ${orderDuration}`,
                 productsInOrder,
-                totalPrice: currentOrder.totalPrice
+                totalPrice: currentOrder.totalPrice,
+                invoice: currentOrder.invoice
             })
         }
         return res.status(200).send({
