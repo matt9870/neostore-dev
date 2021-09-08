@@ -4,6 +4,7 @@ const moment = require('moment');
 const Handlebars = require("handlebars");
 const pdf = require('html-pdf');
 const getInvoiceHtml = require('../helpers/getInvoiceHtml.helper');
+const productModel = require('../models/product.model')
 
 async function checkForDuplicateAddress(userAddresses, newAddress) {
     let arrayLength = userAddresses.length;
@@ -47,7 +48,7 @@ async function generateInvoice(orderData) {
         border: "5mm"
     }
 
-    let username =orderData.userName.split(' ');
+    let username = orderData.userName.split(' ');
     let filename = `${username[0]}-${orderData.orderId}-invoice.pdf`;
     let invoicePath = path.join(__dirname, `../../invoices/${filename}`);
 
@@ -58,8 +59,8 @@ async function generateInvoice(orderData) {
         type: "", //defaults to pdf when given ""
     }
 
-    let destination =  await generatePDF(document, options);
-    return ({destination,filename});
+    let destination = await generatePDF(document, options);
+    return ({ destination, filename });
 }
 
 async function generatePDF(document, options) {
@@ -71,7 +72,7 @@ async function generatePDF(document, options) {
 }
 
 async function convertToPDF(document, invoice) {
-    const file = new Promise((resolve,reject) => {
+    const file = new Promise((resolve, reject) => {
         invoice.toFile(document.path, (err, data) => {
             if (err) {
                 console.log(`err at invoiceData`);
@@ -84,5 +85,21 @@ async function convertToPDF(document, invoice) {
 
 }
 
+async function updateStock(allProducts) {
+    let productCount = allProducts.length, currentProduct;
 
-module.exports = { checkForDuplicateAddress, getProductDetails, generateInvoice };
+    for (let j = 0; j < productCount; j++) {
+        currentProduct = productModel.findById(allProducts[j].productId);
+        currentProduct.productStockCount--;
+        
+        currentProduct.save(currentProduct).then().catch(err => {
+            return res.status(400).send({
+                message: `Stock was not updated for ${currentProduct.productName}`
+            })
+        })
+    }
+    return true;
+}
+
+
+module.exports = { checkForDuplicateAddress, getProductDetails, generateInvoice, updateStock };

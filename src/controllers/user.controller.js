@@ -402,17 +402,25 @@ exports.placeOrder = async (req, res) => {
         const user = await userModel.findById(res.locals.userId);
         let cart = await cartModel.findById(user.cartId);
 
+
         if (!user)
             throw `User was not found`
         if (order.status)
             throw `Attempting to place an order that has already been placed`
         order.status = true;
         user.orders.push(order._id);
+
+        //emptying the cart
         cart.productIds = [];
         cart.productDetails = [];
         cart.subTotalPrice = 0;
         cart.totalPrice = 0;
+
+        let stockChange = userHelper.updateStock(order.productDetails);
+
+        //Filtering product details for order model and invoice
         let products = await userHelper.getProductDetails(order.productDetails);
+        
         let address = order.address.address + ', ' + order.address.city + ', ' + order.address.state + ', ' + order.address.country + ', Pincode: ' + order.address.pincode;
         let name = user.firstName + ' ' + user.secondName;
         let message = ``

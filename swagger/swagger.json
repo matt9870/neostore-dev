@@ -1240,6 +1240,163 @@
 				},
 				"deprecated": false
 			}
+		},
+		"/addNewProduct": {
+			"post": {
+				"tags": [
+					"Admin Module"
+				],
+				"summary": "Add new products to Neostore",
+				"parameters": [],
+				"requestBody": {
+					"description": "Enter the details of the product and upload atleat 2 images of the product",
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"productName": {
+										"type": "string",
+										"required": true
+									},
+									"seller": {
+										"type": "string"
+									},
+									"images": [
+										{
+											"type": "File",
+											"collectionFormat": "multi"
+										}
+									],
+									"description": {
+										"type": "string"
+									},
+									"features": {
+										"type": "string"
+									},
+									"category": {
+										"type": "string"
+									},
+									"color": {
+										"type": "string"
+									},
+									"price": {
+										"type": "string"
+									},
+									"stock": {
+										"type": "string"
+									}
+								}
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Product has been added to Neostore successfully",
+						"headers": {}
+					}
+				},
+				"deprecated": false,
+				"security": []
+			}
+		},
+		"/addProductCategories": {
+			"post": {
+				"tags": [
+					"Admin Module"
+				],
+				"summary": "Add new product categories to Neostore",
+				"requestBody": {
+					"description": "Enter the details of the product and upload atleat 2 images of the product",
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"productCategories": {
+										"type": "string"
+									}
+								}
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "success",
+						"headers": {}
+					}
+				},
+				"deprecated": false,
+				"security":[]
+			}
+		},
+		"/getProductCategories": {
+			"get": {
+				"tags": [
+					"Admin Module"
+				],
+				"summary": "Get all product categories in Neostore",
+				"responses": {
+					"200": {
+						"description": "success",
+						"headers": {}
+					}
+				},
+				"deprecated": false,
+				"security":[]
+			}
+		},
+		"/addProductColors": {
+			"post": {
+				"tags": [
+					"Admin Module"
+				],
+				"summary": "Add new product categories to Neostore",
+				"requestBody": {
+					"description": "Enter the details of the product and upload atleat 2 images of the product",
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"productColors": {
+										"type": "string"
+									}
+								}
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "success",
+						"headers": {}
+					}
+				},
+				"deprecated": false,
+				"security":[]
+			}
+		},
+		"/getProductColors": {
+			"get": {
+				"tags": [
+					"Admin Module"
+				],
+				"summary": "Get all product colors in Neostore",
+				"responses": {
+					"200": {
+						"description": "success",
+						"headers": {}
+					}
+				},
+				"deprecated": false,
+				"security":[]
+			}
 		}
 	},
 	"security": [
