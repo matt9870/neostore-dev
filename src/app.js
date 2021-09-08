@@ -21,9 +21,9 @@ app.use(passport.session());
 
 //importing swagger json file and serving the same
 app.use(
-	"/api-docs",
-	swaggerUi.serve,
-	swaggerUi.setup(require(path.resolve(`${__dirname}/../swagger/swagger.json`)))
+    "/api-docs",
+    swaggerUi.serve,
+    swaggerUi.setup(require(path.resolve(`${__dirname}/../swagger/swagger.json`)))
 );
 
 //Using routers
@@ -38,9 +38,20 @@ app.get('/googleAuth', passport.authenticate('google', { scope: ['profile', 'ema
 app.get('/google/callback',
     passport.authenticate('google', { failureRedirect: '/' }),
     function (req, res) {
-        // console.log(req.user);
-        res.redirect('/loginWithGoogle?user='+ JSON.stringify(req.user));
+        res.redirect('/loginWithGoogle?user=' + JSON.stringify(req.user));
     });
+
+//User authentication using Facebook
+app.get('/facebookAuth', passport.authenticate('facebook', {
+    scope: 'email'
+  }));
+
+app.get('/facebook/callback',
+    passport.authenticate('facebook', { failureRedirect: '/' }),
+    function (req, res) {
+        res.redirect('/loginWithFacebook?user=' + JSON.stringify(req.user));
+    });
+
 
 //Error Handler
 app.use(function (err, req, res, next) {
@@ -56,7 +67,6 @@ app.use(function (err, req, res, next) {
 
 //homepage
 app.get('/', (req, res) => {
-    console.log(`requested homepage`);
     res.send('Homepage');
 });
 

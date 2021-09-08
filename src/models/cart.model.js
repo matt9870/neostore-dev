@@ -5,23 +5,24 @@ const validator = require('validator');
 const cartSchema = new mongoose.Schema({
     userId: {
         type: ObjectId,
-        required:true
+        required:true,
     },
+    // userId: { type: mongoose.Schema.Types.ObjectId, ref: 'user', required: true },
     userEmail: {
         type: String,
-        required:true
+        required: true
     },
     productIds: Array,
     productDetails: [{
-        productId:ObjectId,
-        productName:String,
-        productSeller:String,
+        productId: ObjectId,
+        productName: String,
+        productSeller: String,
         productColor: String,
-        productStock:Number,
-        orderQuantity:Number,
+        productStock: Number,
+        orderQuantity: Number,
         productImage: String,
-        productPrice:Number,
-        total:Number
+        productPrice: Number,
+        total: Number
     }],
     subTotalPrice: Number,
     totalPrice: Number

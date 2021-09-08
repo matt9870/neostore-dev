@@ -1,5 +1,6 @@
 const multer = require('multer');
 const path = require('path');
+// const userModel = require('../models/user.model');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -7,9 +8,13 @@ const storage = multer.diskStorage({
     },
     filename: (req, file, cb) => {
         let username = `none`;
+        // const user = await userModel.findById(res.locals.userId);
         if (!(req.body.firstName === undefined)){
             username = req.body.firstName;
         }
+        // if (!(user.firstName === undefined)){
+        //     username = user.firstName;
+        // }
         const lengthOfExtension = -path.extname(file.originalname).length;
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         cb(null, username + '-' + uniqueSuffix + path.extname(file.originalname))

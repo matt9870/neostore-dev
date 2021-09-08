@@ -33,6 +33,7 @@ exports.generateToken = async (req, res) => {
 exports.verifyToken = async (req, res, next) => {
     let bearerToken = await req.headers["authorization" || 'Authorization'];
     if (!bearerToken) {
+        console.log(`no token`);
         return res.status(403).json({
             message: "No token provided - User is not authorized!"
         })

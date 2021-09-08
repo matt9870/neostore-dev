@@ -4,6 +4,7 @@ const productSchema = new mongoose.Schema({
     productName: {
         type: String,
         required:true,
+        trim: true,
         unique:true
     },
     productSeller: {
@@ -20,6 +21,7 @@ const productSchema = new mongoose.Schema({
     },
     productCategory: {
         type: String,
+        trim: true,
         required:true
     },
     productColors: {
@@ -41,10 +43,12 @@ const productSchema = new mongoose.Schema({
     },
     productPrice: {
         type: Number,
+        trim: true,
         required:true
     },
     productStockCount:{
         type: Number,
+        trim: true,
         required:true
     },
     productOrderCount: Number,

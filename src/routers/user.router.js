@@ -6,7 +6,11 @@ const userRouter = new express.Router();
 
 
 userRouter.get('/loginWithGoogle', userController.verifySSO, auth.generateToken, async (req, res) => {
-    res.json({res})
+    res.json({ res })
+})
+
+userRouter.get('/loginWithFacebook', userController.verifySSO, auth.generateToken, async (req, res) => {
+    res.json({ res })
 })
 
 //User Authentication, recover password
@@ -14,7 +18,7 @@ userRouter.post('/register', upload.single(`profile-pic`), userController.regist
     res.json({ res });
 })
 
-userRouter.post(`/login`,userController.verifyUser, auth.generateToken, (req, res) => {
+userRouter.post(`/login`, userController.verifyUser, auth.generateToken, (req, res) => {
     res.json({ res });
 })
 
@@ -64,6 +68,11 @@ userRouter.post('/updateprofile', auth.verifyToken, userController.updateProfile
     res.json({ res });
 })
 
+userRouter.post('/updateProfilePic', auth.verifyToken, upload.single(`profile-pic`), userController.updateProfilePic, (req, res) => {
+    res.json({ res });
+})
+
+
 userRouter.get('/getCustAddress', auth.verifyToken, userController.getCustomerAddress, (req, res) => {
     res.json({ res });
 })
@@ -73,6 +82,10 @@ userRouter.get('/getOrders', auth.verifyToken, userController.getOrdersDetails, 
 })
 
 userRouter.post('/addCustAddress', auth.verifyToken, userController.addCustomerAddress, (req, res) => {
+    res.json({ res });
+})
+
+userRouter.post('/updateAddress', auth.verifyToken, userController.updateAddress, (req, res) => {
     res.json({ res });
 })
 

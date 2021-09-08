@@ -13,7 +13,7 @@ productRouter.post('/addNewProduct', upload.fields([{
     res.json({ res });
 })
 
-productRouter.post('/addProductImages/:id', upload.fields([{
+productRouter.post('/addProductImages/:id&:color', upload.fields([{
     name: `images`, maxCount: 5
 }]), productController.addProductImages, (req, res) => {
     res.json({ res })
@@ -21,24 +21,24 @@ productRouter.post('/addProductImages/:id', upload.fields([{
 
 /*********************************************************************************** */
 //user
-productRouter.get('/getDashboard',auth.verifyToken, productController.getDashboard, (req, res) => {
+productRouter.get('/getDashboard', auth.verifyToken, productController.getDashboard, (req, res) => {
     res.json({ res });
 })
 
-productRouter.post('/find/:keyword', auth.verifyToken, productController.searchForProduct, (req,res) => {
-    res.json({res});
+productRouter.post('/find/:keyword', auth.verifyToken, productController.searchForProduct, (req, res) => {
+    res.json({ res });
 })
 
-productRouter.get('/commonProducts', productController.getCommonProducts, (req,res) => {
-    res.json({res});
+productRouter.get('/commonProducts', auth.verifyToken, productController.getCommonProducts, (req, res) => {
+    res.json({ res });
 })
 
-productRouter.post('/filterCommonProducts', productController.filterCommonProducts, (req,res) => {
-    res.json({res});
+productRouter.post('/filterCommonProducts', auth.verifyToken, productController.filterCommonProducts, (req, res) => {
+    res.json({ res });
 })
 
 
-productRouter.get('/getProductDetails/:id&:color',  productController.getProductDetails, (req, res) => {
+productRouter.get('/getProductDetails/:id&:color', auth.verifyToken, productController.getProductDetails, (req, res) => {
     res.json({ res })
 })
 
@@ -46,8 +46,8 @@ productRouter.post('/addToCart/:id&:color', auth.verifyToken, productController.
     res.json({ res });
 })
 
-productRouter.post(`/addRating/:id&:rating`,auth.verifyToken, productController.addProductRating, (req,res) => {
-    res.json({res});
+productRouter.post(`/addRating/:id&:rating`, auth.verifyToken, productController.addProductRating, (req, res) => {
+    res.json({ res });
 })
 
 //other apis for testing purposes

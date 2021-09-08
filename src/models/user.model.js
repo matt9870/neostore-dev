@@ -1,25 +1,23 @@
 const { ObjectId } = require('mongodb');
 const mongoose = require('mongoose');
 const validator = require('validator');
+const Joi = require('joi');
 
 const userSchema = new mongoose.Schema({
     firstName: {
         type: String,
+        trim: true,
         required: true
     },
     secondName: {
         type: String,
+        trim: true,
         required: true
     },
     contactNo: {
         type: Number,
-        unique: true
-        // validate: {
-        //     validator: function(v) {
-        //         return /d{10}/.test(v);
-        //     },
-        //     message: '{VALUE} is not a valid 10 digit number!'
-        // }
+        trim: true,
+        unique:true
     },
     email: {
         type: String,
@@ -43,6 +41,7 @@ const userSchema = new mongoose.Schema({
     },
     gender: {
         type: String,
+        trim: true,
         enum: [`male`, `female`],
     },
     role: {
@@ -56,6 +55,7 @@ const userSchema = new mongoose.Schema({
     addresses: [{
         address: {
             type: String,
+            trim: true,
             required: true
         },
         pincode: {
@@ -75,12 +75,16 @@ const userSchema = new mongoose.Schema({
             required: true
         }
     }],
-    defaultAddress : ObjectId,
+    defaultAddress: ObjectId,
     resetCode: Number,
     SSOprovider: String,
     cartId: {
         type: ObjectId
     },
+    contactNoVerified: {
+        type:Boolean,
+        default: false
+    }
 })
 
 const userModel = mongoose.model(`userModel`, userSchema);

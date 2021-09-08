@@ -75,7 +75,6 @@ async function addQuantity(cart, product, productColorSelected) {
         else
             cart.subTotalPrice = cart.subTotalPrice + product.productPrice;
         cart.totalPrice = 1.05 * cart.subTotalPrice;
-        console.log(`added the quantity of the existing product`);
         return cart;
     }
     else
@@ -83,7 +82,6 @@ async function addQuantity(cart, product, productColorSelected) {
 }
 
 async function addNewProduct(cart, product, productColorSelected) {
-    console.log(`adding new product`);
     const productImage = await getProductImagesOfColor(product, productColorSelected);
     cart.productIds.push(product._id);
     cart.productDetails.push({
@@ -122,9 +120,11 @@ async function addProductCount() {
         let serverData = await productCategoryModel.findById(serverDataArray[0]._id);
         serverData.productCount += 1;
         serverData.save(serverData).then(data => {
-            return (`product count has been increased to ${data.productCount}`);
+            console.log(`product count updated`);
+            return `product count has been increased to ${data.productCount}`;
         }).catch(err => {
-            return (`product count was not increased due to the err - ${err}`);
+            console.log(`product count not updated`);
+            return (`product count was not increased due to the following error - ${err}`);
         })
     } catch (error) {
         return error

@@ -86,13 +86,14 @@ async function convertToPDF(document, invoice) {
 }
 
 async function updateStock(allProducts) {
-    let productCount = allProducts.length, currentProduct;
+    let productCount = allProducts.length;
 
     for (let j = 0; j < productCount; j++) {
-        currentProduct = productModel.findById(allProducts[j].productId);
-        currentProduct.productStockCount--;
+        let currentProduct = await productModel.findById(allProducts[j].productId);
+        currentProduct.productStockCount -= allProducts[j].orderQuantity;
         
-        currentProduct.save(currentProduct).then().catch(err => {
+        currentProduct.save(currentProduct).then(data=>{
+        }).catch(err => {
             return res.status(400).send({
                 message: `Stock was not updated for ${currentProduct.productName}`
             })

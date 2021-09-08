@@ -34,7 +34,8 @@ exports.registerUser = async (req, res, next) => {
                 destination: userProfilePic.destination,
                 fileType: userProfilePic.mimetype
             },
-            gender: req.body.gender.toLowerCase()
+            gender: req.body.gender.toLowerCase(),
+            contactNoVerified: true
         })
         const newCart = new cartModel({
             userId: newUser._id,
@@ -177,12 +178,20 @@ exports.verifyUser = async (req, res, next) => {
 exports.verifySSO = async (req, res, next) => {
     try {
         let user = JSON.parse(req.query.user);
-        let username = await user.displayName;
         let profilePic = await user.picture;
+        let username = await user.displayName;
         let SSOprovider = await user.provider;
         let email = await user.email;
+        let jsonData = await user._json;
+
+        if (SSOprovider === 'facebook') {
+            username = jsonData.first_name + ' ' + jsonData.last_name;
+            email = jsonData.email;
+            profilePic = `nil`;
+        }
 
         userModel.find({ email }, async (err, user) => {
+
             if (user.length !== 0) {
                 res.locals.currentUser = {
                     message: `User authenticated.`,
@@ -208,6 +217,7 @@ exports.verifySSO = async (req, res, next) => {
                     profile_pic: {
                         filename: profilePic
                     },
+                    contactNo: Math.floor((Math.random() * 100) + 10000000000),
                     SSOprovider,
                     password: hashedPassword
                 })
@@ -226,7 +236,11 @@ exports.verifySSO = async (req, res, next) => {
                             cartId: data.cartId
                         }
                         next();
+                    }).catch(err => {
+                        throw (`error occurred while saving cart data`, err);
                     })
+                }).catch(err => {
+                    throw (`error occurred while saving user data`, err);
                 })
             }
         })
@@ -416,11 +430,11 @@ exports.placeOrder = async (req, res) => {
         cart.subTotalPrice = 0;
         cart.totalPrice = 0;
 
-        let stockChange = userHelper.updateStock(order.productDetails);
+        let stockChangeResult = await userHelper.updateStock(order.productDetails);
 
         //Filtering product details for order model and invoice
         let products = await userHelper.getProductDetails(order.productDetails);
-        
+
         let address = order.address.address + ', ' + order.address.city + ', ' + order.address.state + ', ' + order.address.country + ', Pincode: ' + order.address.pincode;
         let name = user.firstName + ' ' + user.secondName;
         let message = ``
@@ -428,7 +442,8 @@ exports.placeOrder = async (req, res) => {
         //generating unique order Id for sharing with customer
         order.orderId = serverData.orderId;
         serverData.orderId++;
-        //creating an invoice pdf
+
+        // creating an invoice pdf
         let { destination, filename } = await userHelper.generateInvoice(order);
 
         if (destination === undefined)
@@ -436,11 +451,12 @@ exports.placeOrder = async (req, res) => {
         order.invoice = filename;
 
         cart.save(cart).then(() => {
-            message = `User's cart has been emptied and `
+            message = `User's cart is emptied, `
         }).catch(err => {
             throw `error while emptying and saving cart data`, err
         })
-
+        if(stockChangeResult)
+            message += `stock count updated, and `
         user.save(user).then(() => {
             order.save(order).then(orderData => {
                 serverData.save(serverData).then(() => {
@@ -497,11 +513,24 @@ exports.getProfileDetails = async (req, res) => {
 
 exports.updateProfileDetails = async (req, res) => {
     try {
+        const userProfilePic = req.file;
         const user = await userModel.findById(res.locals.userId);
         const newProfileDetails = req.body.profileDetails;
         let profileChangeStatus = false;
         if (!user)
             throw `user data was not found`
+
+        if (req.file || userProfilePic) {
+            if (!user.profile_pic.filename === 'nil') {
+                deleteFile(`./images/user/${user.profile_pic.filename}`);
+            }
+            user.profile_pic = {
+                filename: userProfilePic.filename,
+                destination: userProfilePic.destination,
+                fileType: userProfilePic.mimetype
+            }
+            console.log(`file uploaded`, userProfilePic);
+        }
         if (newProfileDetails.firstName) {
             if (user.firstName !== newProfileDetails.firstName) {
                 user.firstName = newProfileDetails.firstName;
@@ -527,6 +556,8 @@ exports.updateProfileDetails = async (req, res) => {
         if (newProfileDetails.mobile) {
             if (user.contactNo != newProfileDetails.mobile) {
                 user.contactNo = newProfileDetails.mobile;
+                if (!user.contactNoVerified)
+                    user.contactNoVerified = true;
                 console.log(`mobile change`);
                 profileChangeStatus = true
             }
@@ -566,6 +597,51 @@ exports.updateProfileDetails = async (req, res) => {
                 userData
             })
         }
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send({
+            message: `${app.APP.SERVER.ERROR}`,
+            error
+        })
+    }
+}
+
+exports.updateProfilePic = async (req, res) => {
+    try {
+        const userProfilePic = req.file;
+        const user = await userModel.findById(res.locals.userId);
+        let profileChangeStatus = false;
+
+        if (!user)
+            throw `user data was not found`
+
+        if (req.file || userProfilePic) {
+            if (!user.profile_pic.filename === 'nil') {
+                deleteFile(`./images/user/${user.profile_pic.filename}`);
+            }
+            user.profile_pic = {
+                filename: userProfilePic.filename,
+                destination: userProfilePic.destination,
+                fileType: userProfilePic.mimetype
+            }
+            profileChangeStatus = true;
+            console.log(`file uploaded`, userProfilePic);
+        }
+
+        if (profileChangeStatus) {
+            user.save(user).then(data => {
+                res.status(200).send({
+                    message: `Profile picture updated successfully`,
+                    profilePic: data.profile_pic
+                })
+            }).catch(err => {
+                throw err;
+            })
+        }
+        else
+            return res.status(200).send({
+                message: `no change made to user profile`
+            })
     } catch (error) {
         console.log(error);
         return res.status(500).send({
@@ -709,4 +785,9 @@ exports.addCustomerAddress = async (req, res) => {
         })
     }
 
+}
+
+exports.updateAddress = async (req,res) => {
+    //need address id
+    // need new address
 }
