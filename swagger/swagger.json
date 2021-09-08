@@ -795,6 +795,64 @@
 				"deprecated": false
 			}
 		},
+		"/updateAddress": {
+			"post": {
+				"tags": [
+					"Manage Profile"
+				],
+				"summary": "Update existing address",
+				"requestBody": {
+					"description": "",
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"addressId": {
+										"type": "string"
+									},
+									"updatedAddress": {
+										"address": {
+											"type": "string"
+										},
+										"pincode": {
+											"type": "number"
+										},
+										"city": {
+											"type": "string"
+										},
+										"state": {
+											"type": "string"
+										},
+										"country": {
+											"type": "string"
+										}
+									}
+								}
+							},
+							"example": {
+								"addressId":"6137c927d8d95915f9af85c7",
+								"updatedAddress": {
+									"address": "6th Avenue",
+									"pincode": 345678,
+									"city": "Onty",
+									"state": "LA",
+									"country": "USA"
+								}
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Address added",
+						"headers": {}
+					}
+				},
+				"deprecated": false
+			}
+		},
 		"/getDashboard": {
 			"get": {
 				"tags": [

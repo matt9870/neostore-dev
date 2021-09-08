@@ -8,6 +8,8 @@ const productModel = require('../models/product.model')
 
 async function checkForDuplicateAddress(userAddresses, newAddress) {
     let arrayLength = userAddresses.length;
+    if(arrayLength >9)
+        return true;
     for (let j = 0; j < arrayLength; j++) {
         if (userAddresses[j].address === newAddress.address)
             return true;

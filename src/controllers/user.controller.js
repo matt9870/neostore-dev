@@ -16,16 +16,24 @@ var generator = require('generate-password');
 
 //User Authentication, recover password
 exports.registerUser = async (req, res, next) => {
+    let userProfilePic;
     try {
-        const userProfilePic = req.file;
+        userProfilePic = await req.file;
         if (!req.file || !userProfilePic) {
             res.status(400).send({ message: "Upload an image in jpeg/jpg/png format or File was not uploaded" });
             return;
         }
         let hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
+
+        //validating user first and secondname
+        var nameRegex = /^[A-Za-z]+$/;
+        let firstName = req.body.firstName.trim(), secondName = req.body.secondName.trim();
+        if (!(nameRegex.test(firstName) && nameRegex.test(secondName)))
+            throw `Validation error found for name. Should be only characters with minlength of 3`;
+
         const newUser = new userModel({
-            firstName: req.body.firstName,
-            secondName: req.body.secondName,
+            firstName,
+            secondName,
             contactNo: req.body.contactNo,
             email: req.body.email,
             password: hashedPassword,
@@ -363,9 +371,7 @@ exports.proceedToCheckout = async (req, res) => {
             }
         }
         else {
-            console.log(`adding existing address to order`);
             order.address = req.body.address;
-
             serverData.save(serverData).then(() => {
                 order.save(order).then(data => {
                     res.status(200).send({
@@ -374,7 +380,6 @@ exports.proceedToCheckout = async (req, res) => {
                     })
                 }).catch(err => { throw `Error while saving order data - ${err}` })
             }).catch(err => { throw `error while saving server data`, err })
-
         }
     } catch (error) {
         console.log(error);
@@ -455,7 +460,7 @@ exports.placeOrder = async (req, res) => {
         }).catch(err => {
             throw `error while emptying and saving cart data`, err
         })
-        if(stockChangeResult)
+        if (stockChangeResult)
             message += `stock count updated, and `
         user.save(user).then(() => {
             order.save(order).then(orderData => {
@@ -519,6 +524,7 @@ exports.updateProfileDetails = async (req, res) => {
         let profileChangeStatus = false;
         if (!user)
             throw `user data was not found`
+        var nameRegex = /^[A-Za-z]+$/;
 
         if (req.file || userProfilePic) {
             if (!user.profile_pic.filename === 'nil') {
@@ -532,23 +538,26 @@ exports.updateProfileDetails = async (req, res) => {
             console.log(`file uploaded`, userProfilePic);
         }
         if (newProfileDetails.firstName) {
-            if (user.firstName !== newProfileDetails.firstName) {
-                user.firstName = newProfileDetails.firstName;
-                console.log(`name change`);
+            let firstName = newProfileDetails.firstName.trim()
+            if (!nameRegex.test(firstName))
+                throw `Validation error found for firstName. Should be only characters with minlength of 3`;
+            if (user.firstName !== firstName) {
+                user.firstName = firstName;
                 profileChangeStatus = true
             }
         }
         if (newProfileDetails.secondName) {
-            if (user.secondName !== newProfileDetails.secondName) {
-                user.secondName = newProfileDetails.secondName;
-                console.log(`name change`);
+            let secondName = newProfileDetails.secondName.trim();
+            if (!nameRegex.test(secondName))
+                throw `Validation error found for firstName. Should be only characters with minlength of 3`;
+            if (user.secondName !== secondName) {
+                user.secondName = secondName;
                 profileChangeStatus = true
             }
         }
         if (newProfileDetails.gender) {
             if (user.gender !== newProfileDetails.gender.toLowerCase()) {
                 user.gender = newProfileDetails.gender.toLowerCase();
-                console.log(`gender change`);
                 profileChangeStatus = true
             }
         }
@@ -558,7 +567,6 @@ exports.updateProfileDetails = async (req, res) => {
                 user.contactNo = newProfileDetails.mobile;
                 if (!user.contactNoVerified)
                     user.contactNoVerified = true;
-                console.log(`mobile change`);
                 profileChangeStatus = true
             }
         }
@@ -787,7 +795,47 @@ exports.addCustomerAddress = async (req, res) => {
 
 }
 
-exports.updateAddress = async (req,res) => {
-    //need address id
-    // need new address
+exports.updateAddress = async (req, res) => {
+    try {
+        const user = await userModel.findById(res.locals.userId);
+        if (!user || !req.body.updatedAddress || !req.body.addressId)
+            throw `user not found, Or updated_address/addressId are not found in requestBody`
+        const newAddress = req.body.address;
+        let addressCount = user.addresses.length, addresses = user.addresses, updatedAddress;
+        for (let j = 0; j < addressCount; j++) {
+            if (addresses[j]._id.equals(req.body.addressId)) {
+                if (req.body.updatedAddress.address) {
+                    user.addresses[j].address = req.body.updatedAddress.address.trim();
+                }
+                if (req.body.updatedAddress.pincode) {
+                    user.addresses[j].pincode = req.body.updatedAddress.pincode;
+                }
+                if (req.body.updatedAddress.city) {
+                    user.addresses[j].city = req.body.updatedAddress.city.trim();
+                }
+                if (req.body.updatedAddress.state) {
+                    user.addresses[j].state = req.body.updatedAddress.state.trim();
+                }
+                if (req.body.updatedAddress.country) {
+                    user.addresses[j].country = req.body.updatedAddress.country.trim();
+                }
+                updatedAddress = user.addresses[j];
+                break;
+            }
+        }
+        user.save(user).then(() => {
+            return res.status(200).send({
+                message: `Address has been updated`,
+                updatedAddress
+            }).catch(err => {
+                throw (`error while saving user data`, err);
+            })
+        })
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send({
+            message: `${app.APP.SERVER.ERROR}`,
+            error
+        })
+    }
 }

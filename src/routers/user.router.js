@@ -72,7 +72,6 @@ userRouter.post('/updateProfilePic', auth.verifyToken, upload.single(`profile-pi
     res.json({ res });
 })
 
-
 userRouter.get('/getCustAddress', auth.verifyToken, userController.getCustomerAddress, (req, res) => {
     res.json({ res });
 })
