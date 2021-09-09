@@ -27,9 +27,14 @@ exports.registerUser = async (req, res, next) => {
 
         //validating user first and secondname
         var nameRegex = /^[A-Za-z]+$/;
+        var contactNoRegex = /\d{10}/;
         let firstName = req.body.firstName.trim(), secondName = req.body.secondName.trim();
         if (!(nameRegex.test(firstName) && nameRegex.test(secondName)))
             throw `Validation error found for name. Should be only characters with minlength of 3`;
+
+        if(!contactNoRegex.test(req.body.contactNo)){
+            throw `Validation error for contact number. should be 10 digits`;
+        }
 
         const newUser = new userModel({
             firstName,
@@ -113,7 +118,7 @@ exports.sendVerificationCode = async (req, res) => {
         let code = Math.floor(Math.random() * 88888) + 11111;
 
         let validTime = moment().add(20, 'm').format('MMMM Do YYYY, h:mm a');
-        let validTimeDay = parseInt(moment().add(20,'m').format('d'));
+        let validTimeDay = parseInt(moment().add(20, 'm').format('d'));
         let validTimeDate = parseInt(moment().add(20, 'm').format('D'));
         let validTimeMonth = parseInt(moment().add(20, 'm').format('M'));
         let validTimeHour = moment().add(20, 'm').hours();
@@ -127,13 +132,13 @@ exports.sendVerificationCode = async (req, res) => {
         })
 
         user.resetCode = code;
-        cronHelper.nullifyResetCode(validTimeMinute, validTimeHour, validTimeDate, validTimeMonth,validTimeDay, user._id);
+        cronHelper.nullifyResetCode(validTimeMinute, validTimeHour, validTimeDate, validTimeMonth, validTimeDay, user._id);
 
         user.save(user).then(data => {
             res.status(200).send({
                 message: `success`,
                 code: data.resetCode,
-                emailStatus:`test`
+                emailStatus: `test`
             })
         }).catch(err => { throw err })
     } catch (error) {
@@ -839,9 +844,9 @@ exports.updateAddress = async (req, res) => {
             return res.status(200).send({
                 message: `Address has been updated`,
                 updatedAddress
-            }).catch(err => {
-                throw (`error while saving user data`, err);
             })
+        }).catch(err => {
+            throw (`error while saving user data`, err);
         })
     } catch (error) {
         console.log(error);
