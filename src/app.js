@@ -44,14 +44,13 @@ app.get('/google/callback',
 //User authentication using Facebook
 app.get('/facebookAuth', passport.authenticate('facebook', {
     scope: 'email'
-  }));
+}));
 
 app.get('/facebook/callback',
     passport.authenticate('facebook', { failureRedirect: '/' }),
     function (req, res) {
         res.redirect('/loginWithFacebook?user=' + JSON.stringify(req.user));
     });
-
 
 //Error Handler
 app.use(function (err, req, res, next) {

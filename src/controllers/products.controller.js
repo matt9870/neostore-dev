@@ -18,9 +18,9 @@ exports.addProduct = async (req, res) => {
             })
         }
         const productImagesArray = await productsHelper.getFileDetails(req.files.images);
-
+        let productName = req.body.productName.toLowerCase();
         const product = new productModel({
-            productName: req.body.productName,
+            productName,
             productSeller: req.body.seller,
             productDesc: req.body.description,
             productFeatures: req.body.features,

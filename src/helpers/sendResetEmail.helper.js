@@ -15,8 +15,9 @@ async function sendResetCode(data) {
             from: 'Admin',
             to: `${data.receiverEmail}`,
             subject: `Reset Password`,
-            html: `<h2>Here is your code to reset your password ${data.code}</h2>
-                  <p>Use this link to reset your password: ${data.resetUrl}<p>`,
+            html: `<h2>Here is your one time code to reset your password ${data.code}</h2>
+                  <p>Use this link to reset your password: ${data.resetUrl}<p>
+                  <p>This is a one time code valid till ${data.validTime} only.<p>`,
         };
     
         let info = await transporter.sendMail(mailOptions);

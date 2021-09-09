@@ -12,7 +12,7 @@ const deleteFile = require('../helpers/deleteFile.helper');
 var sendEmailHelper = require('../helpers/sendResetEmail.helper');
 const userHelper = require('../helpers/user.helper');
 var generator = require('generate-password');
-
+const cronHelper = require('../helpers/cron.helper');
 
 //User Authentication, recover password
 exports.registerUser = async (req, res, next) => {
@@ -111,17 +111,29 @@ exports.sendVerificationCode = async (req, res) => {
             throw `email doesn't belong to an existing user. Check email or create an account to proceed`
         let user = await userModel.findById(userArray[0]._id);
         let code = Math.floor(Math.random() * 88888) + 11111;
+
+        let validTime = moment().add(20, 'm').format('MMMM Do YYYY, h:mm a');
+        let validTimeDay = parseInt(moment().add(20,'m').format('d'));
+        let validTimeDate = parseInt(moment().add(20, 'm').format('D'));
+        let validTimeMonth = parseInt(moment().add(20, 'm').format('M'));
+        let validTimeHour = moment().add(20, 'm').hours();
+        let validTimeMinute = moment().add(20, 'm').minutes();
+
         let emailStatus = await sendEmailHelper.sendResetCode({
             receiverEmail,
             code,
-            resetUrl: `http://localhost:3000/recoverPassword`
+            resetUrl: `http://localhost:3000/recoverPassword`,
+            validTime
         })
+
         user.resetCode = code;
+        cronHelper.nullifyResetCode(validTimeMinute, validTimeHour, validTimeDate, validTimeMonth,validTimeDay, user._id);
+
         user.save(user).then(data => {
             res.status(200).send({
                 message: `success`,
                 code: data.resetCode,
-                emailStatus
+                emailStatus:`test`
             })
         }).catch(err => { throw err })
     } catch (error) {

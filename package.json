@@ -21,6 +21,7 @@
     "bcrypt": "^5.0.1",
     "bluebird": "^3.7.2",
     "cookie-session": "^1.4.0",
+    "cron": "^1.8.2",
     "express": "^4.17.1",
     "express-session": "^1.17.2",
     "generate-password": "^1.6.1",
