@@ -20,8 +20,8 @@ const userSchema = new mongoose.Schema({
         type: Number,
         trim: true,
         unique:true,
-        min:70000000000,
-        max:99999999999
+        // min:7000000000,
+        // max:9999999999
     },
     email: {
         type: String,

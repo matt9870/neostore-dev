@@ -4,7 +4,6 @@ const upload = require(`../helpers/uploadProfilePic.helper`);
 const auth = require('../middlewares/auth');
 const userRouter = new express.Router();
 
-
 userRouter.get('/loginWithGoogle', userController.verifySSO, auth.generateToken, async (req, res) => {
     res.json({ res })
 })
